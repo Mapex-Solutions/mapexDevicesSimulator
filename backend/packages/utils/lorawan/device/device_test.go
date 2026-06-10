@@ -1,6 +1,7 @@
 package device
 
 import (
+	"bytes"
 	"testing"
 
 	"simulator/packages/utils/lorawan/crypto"
@@ -107,6 +108,65 @@ func TestOTAAFullRoundTrip(t *testing.T) {
 	}
 	if string(dl.FRMPayload) != "ack" {
 		t.Fatalf("downlink payload: got %q", dl.FRMPayload)
+	}
+}
+
+func TestOTAA11FullRoundTrip(t *testing.T) {
+	nwkKey := types.AES128Key{16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1}
+	appKey := types.AES128Key{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
+	netID := types.NetID{0x00, 0x00, 0x13}
+	joinEUI := types.EUI64{0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x00, 0x00, 0x01}
+	cfg := Config{
+		MACVersion: "1.1.0", Region: "EU868",
+		JoinEUI:    joinEUI,
+		DevEUI:     types.EUI64{0, 1, 2, 3, 4, 5, 6, 7},
+		AppKey:     appKey,
+		NwkKey:     nwkKey,
+		NetID:      netID,
+		Activation: "otaa",
+	}
+	dev := New(cfg)
+
+	// Join request is signed with the NwkKey in 1.1 (verify independently).
+	jr, err := dev.JoinRequest()
+	if err != nil {
+		t.Fatalf("join request: %v", err)
+	}
+	nwkMIC, _ := crypto.ComputeJoinRequestMIC(nwkKey, jr[:len(jr)-4])
+	if string(jr[len(jr)-4:]) != string(nwkMIC[:]) {
+		t.Fatal("1.1 join request must be signed with NwkKey")
+	}
+
+	// LNS sends a join accept (encrypted with NwkKey in 1.1); device derives keys.
+	jn := types.JoinNonce{0x00, 0x00, 0x09}
+	addr := types.DevAddr{0x26, 0x0B, 0xAD, 0x11}
+	phyJA := buildJoinAccept(t, nwkKey, jn, netID, addr)
+	if err := dev.ProcessJoinAccept(phyJA); err != nil {
+		t.Fatalf("process join accept: %v", err)
+	}
+	if !dev.Joined() || dev.DevAddr() != addr {
+		t.Fatalf("1.1 join failed")
+	}
+
+	// The keys the LNS would derive.
+	dn := types.DevNonce{0x01, 0x00}
+	fNwk := crypto.DeriveFNwkSIntKey(nwkKey, jn, joinEUI, dn)
+	sNwk := crypto.DeriveSNwkSIntKey(nwkKey, jn, joinEUI, dn)
+	appS := crypto.DeriveAppSKey(appKey, jn, joinEUI, dn)
+
+	// Uplink: 1.1 MIC binds both network keys + EU868 DR5/channel 0.
+	up, err := dev.BuildUplink(10, []byte("temp=21"), false)
+	if err != nil {
+		t.Fatalf("build uplink: %v", err)
+	}
+	frame, gotMIC := up[:len(up)-4], up[len(up)-4:]
+	wantMIC, _ := crypto.ComputeUplinkMIC(sNwk, fNwk, 0, 5, 0, addr, 0, frame)
+	if !bytes.Equal(gotMIC, wantMIC[:]) {
+		t.Fatalf("1.1 uplink MIC mismatch: got %x want %x", gotMIC, wantMIC[:])
+	}
+	dec, err := crypto.DecryptUplink(appS, addr, 0, up[9:len(up)-4])
+	if err != nil || string(dec) != "temp=21" {
+		t.Fatalf("1.1 uplink payload: got %q err %v", dec, err)
 	}
 }
 

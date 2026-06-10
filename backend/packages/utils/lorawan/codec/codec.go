@@ -105,36 +105,59 @@ type DataUplink struct {
 	ADR        bool
 }
 
-// MarshalDataUplink builds a signed, encrypted data uplink PHYPayload for LoRaWAN
-// 1.0.x (legacy MIC). It encrypts FRMPayload with appSKey and signs the message
-// with nwkSKey. fCnt is the full 32-bit counter; the low 16 bits go on the wire.
-func MarshalDataUplink(up DataUplink, nwkSKey, appSKey types.AES128Key) ([]byte, error) {
+// buildUplinkFrame assembles the unsigned data-uplink frame (MHDR | FHDR | FPort |
+// encrypted FRMPayload), shared by the 1.0.x and 1.1 marshallers which differ only
+// in how the trailing MIC is computed.
+func buildUplinkFrame(up DataUplink, appSKey types.AES128Key) ([]byte, error) {
 	mType := MTypeUnconfirmedDataUp
 	if up.Confirmed {
 		mType = MTypeConfirmedDataUp
 	}
-
 	var fctrl byte
 	if up.ADR {
 		fctrl |= 0x80
 	}
-
 	enc, err := crypto.EncryptUplink(appSKey, up.DevAddr, up.FCnt, up.FRMPayload)
 	if err != nil {
 		return nil, err
 	}
-
 	buf := make([]byte, 0, 12+len(enc)+4)
-	buf = append(buf, byte(mType))             // MHDR
-	buf = append(buf, reverse(up.DevAddr[:])...) // FHDR.DevAddr
-	buf = append(buf, fctrl)                     // FHDR.FCtrl (FOptsLen 0)
+	buf = append(buf, byte(mType))               // MHDR
+	buf = append(buf, reverse(up.DevAddr[:])...)  // FHDR.DevAddr
+	buf = append(buf, fctrl)                      // FHDR.FCtrl (FOptsLen 0)
 	fcnt := make([]byte, 2)
 	binary.LittleEndian.PutUint16(fcnt, uint16(up.FCnt))
 	buf = append(buf, fcnt...) // FHDR.FCnt (low 16)
 	buf = append(buf, up.FPort)
 	buf = append(buf, enc...)
+	return buf, nil
+}
 
+// MarshalDataUplink builds a signed, encrypted data uplink PHYPayload for LoRaWAN
+// 1.0.x (legacy MIC). It encrypts FRMPayload with appSKey and signs the message
+// with nwkSKey. fCnt is the full 32-bit counter; the low 16 bits go on the wire.
+func MarshalDataUplink(up DataUplink, nwkSKey, appSKey types.AES128Key) ([]byte, error) {
+	buf, err := buildUplinkFrame(up, appSKey)
+	if err != nil {
+		return nil, err
+	}
 	mic, err := crypto.ComputeLegacyUplinkMIC(nwkSKey, up.DevAddr, up.FCnt, buf)
+	if err != nil {
+		return nil, err
+	}
+	return append(buf, mic[:]...), nil
+}
+
+// MarshalDataUplink11 builds a signed, encrypted data uplink PHYPayload for LoRaWAN
+// 1.1. The FRMPayload is encrypted with appSKey, but the MIC binds two network
+// session keys plus the data-rate and channel the frame was transmitted on
+// (txDR/txCh) — both must match what the LNS derives from the radio metadata.
+func MarshalDataUplink11(up DataUplink, sNwkSIntKey, fNwkSIntKey, appSKey types.AES128Key, txDR, txCh uint8) ([]byte, error) {
+	buf, err := buildUplinkFrame(up, appSKey)
+	if err != nil {
+		return nil, err
+	}
+	mic, err := crypto.ComputeUplinkMIC(sNwkSIntKey, fNwkSIntKey, 0, txDR, txCh, up.DevAddr, up.FCnt, buf)
 	if err != nil {
 		return nil, err
 	}

@@ -188,15 +188,39 @@ The whole chain is real and vendor-neutral: simulated end-device → vendored cr
 Semtech UDP → ChirpStack gateway-bridge → OTAA join → decrypted uplinks → vendor codec
 → real values.
 
-## 7. What's done vs pending
+## 7. LoRaWAN 1.1 (also verified)
 
-Done (verified): MQTT inbound (live, against mosquitto); LoRaWAN OTAA + data uplinks
-over **Semtech UDP** against ChirpStack, including gateway-online stats; full crypto
-parity; the fire-event REST endpoint; the frontend pieces (subscriptions step, real
-fire dialog, derived gateway connection status).
+Both 1.0.x and 1.1 OTAA are implemented and accepted by ChirpStack live. The 1.1
+differences, all in `device/device.go` + `codec/codec.go`:
+- **Join request MIC** is signed with the **NwkKey** (1.0.x uses the AppKey).
+- **Join accept** is encrypted with the **NwkKey** and the device derives three
+  network session keys (`DeriveFNwkSIntKey`/`DeriveSNwkSIntKey`/`DeriveNwkSEncKey`
+  from NwkKey) plus `AppSKey` from AppKey (1.0.x derives one legacy NwkSKey + AppSKey
+  from the single AppKey).
+- **Uplink MIC** uses `crypto.ComputeUplinkMIC(sNwkSIntKey, fNwkSIntKey, confFCnt,
+  txDR, txCh, addr, fCnt, frame)` — it binds BOTH network keys AND the data-rate and
+  channel index the frame was sent on. **Gotcha:** `txDR`/`txCh` must match what the
+  LNS derives from the radio metadata (rxpk datr/freq), or the MIC fails. For EU868
+  868.1 MHz SF7BW125 that is **DR 5, channel 0** (see `band.Region.UplinkDR/UplinkChannel`).
+- FRMPayload is still encrypted with AppSKey.
+
+ChirpStack provisioning for 1.1: device profile MAC version `LORAWAN_1_1_0`, and the
+device keys set **both** `nwkKey` (the 1.1 NwkKey) and `appKey` (the 1.1 AppKey). In
+the simulator the device carries `macVersion: "1.1.0"` plus both `appKey` and `nwkKey`.
+(In ChirpStack's `device_keys` table, a 1.0.x device stores its single key in
+`nwk_key`; a 1.1 device stores NwkKey in `nwk_key` and AppKey in `app_key`.)
+
+ABP still uses the legacy MIC path (1.1 ABP would need three preset network keys we
+don't model).
+
+## 8. What's done vs pending
+
+Done (verified live against ChirpStack over Semtech UDP): MQTT inbound; LoRaWAN OTAA
+**1.0.x AND 1.1** join + data uplinks; gateway-online stats; full crypto parity; the
+fire-event REST endpoint; a real Dragino LHT65N payload decoded by a vendor codec; the
+frontend pieces (subscriptions step, real fire dialog, derived gateway status).
 
 Pending: **Basics Station (`:3001`) live test** against ChirpStack (UDP fully done);
-LoRaWAN **1.1 uplink MIC** (v1 is 1.0.x legacy; keys are derivable); **dynamic sensor
-values** (payloads are fixed hex today — varying temp/hum needs a hex-aware template);
-and the **backend↔frontend integration pass** (drive the whole LoRaWAN flow from the
-Vue/Electron UI instead of curl/REST).
+**dynamic sensor values** (payloads are fixed hex today — varying temp/hum needs a
+hex-aware template); and the **backend↔frontend integration pass** (drive the whole
+LoRaWAN flow from the Vue/Electron UI instead of curl/REST).

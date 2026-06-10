@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -215,7 +216,11 @@ func linkKey(spec *ports.LoRaWANSpec) string {
 
 // buildDeviceSession parses the hex key material into a device session config.
 func buildDeviceSession(spec *ports.LoRaWANSpec) (*device.Session, error) {
-	cfg := device.Config{Activation: spec.Activation}
+	cfg := device.Config{
+		Activation: spec.Activation,
+		MACVersion: spec.MACVersion,
+		Region:     spec.Region,
+	}
 	var err error
 	if cfg.JoinEUI, err = parseEUI(spec.JoinEUI); err != nil {
 		return nil, err
@@ -225,6 +230,11 @@ func buildDeviceSession(spec *ports.LoRaWANSpec) (*device.Session, error) {
 	}
 	if cfg.AppKey, err = parseKey(spec.AppKey); err != nil {
 		return nil, err
+	}
+	if strings.HasPrefix(spec.MACVersion, "1.1") {
+		if cfg.NwkKey, err = parseKey(spec.NwkKey); err != nil {
+			return nil, fmt.Errorf("lorawan 1.1 requires a valid nwkKey: %w", err)
+		}
 	}
 	if spec.Activation == "abp" {
 		if cfg.DevAddr, err = parseAddr(spec.DevAddr); err != nil {
