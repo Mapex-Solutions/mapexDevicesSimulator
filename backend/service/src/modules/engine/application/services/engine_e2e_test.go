@@ -15,8 +15,10 @@ import (
 	consolePorts "simulator/service/src/modules/console/application/ports"
 	devicesDtos "simulator/service/src/modules/devices/application/dtos"
 	devicesPorts "simulator/service/src/modules/devices/application/ports"
+	gatewaysDtos "simulator/service/src/modules/gateways/application/dtos"
 	"simulator/service/src/modules/engine/application/di"
 	dispatch "simulator/service/src/modules/engine/infrastructure/dispatch"
+	session "simulator/service/src/modules/engine/infrastructure/session"
 	logsDtos "simulator/service/src/modules/logs/application/dtos"
 	logsPorts "simulator/service/src/modules/logs/application/ports"
 )
@@ -33,6 +35,17 @@ func (f *fakeDevices) Update(context.Context, string, *devicesDtos.DeviceInput) 
 	return nil, nil
 }
 func (f *fakeDevices) Delete(context.Context, string) (map[string]bool, error) { return nil, nil }
+
+type fakeGateways struct{ list []gatewaysDtos.Gateway }
+
+func (f *fakeGateways) List(context.Context) ([]gatewaysDtos.Gateway, error) { return f.list, nil }
+func (f *fakeGateways) Create(context.Context, *gatewaysDtos.GatewayInput) (*gatewaysDtos.Gateway, error) {
+	return nil, nil
+}
+func (f *fakeGateways) Update(context.Context, string, *gatewaysDtos.GatewayInput) (*gatewaysDtos.Gateway, error) {
+	return nil, nil
+}
+func (f *fakeGateways) Delete(context.Context, string) (map[string]bool, error) { return nil, nil }
 
 var _ devicesPorts.DevicesServicePort = (*fakeDevices)(nil)
 
@@ -96,10 +109,11 @@ func TestEngine_FiresRendersDispatchesReports(t *testing.T) {
 	pub := &fakePublisher{}
 	lw := &fakeLogWriter{}
 	eng := New(di.EngineServiceDI{
-		Devices:  &fakeDevices{list: []devicesDtos.Device{httpDevice(srv.URL, true, true)}},
-		Logs:     lw,
-		Console:  pub,
-		Registry: dispatch.NewRegistry(),
+		Devices:    &fakeDevices{list: []devicesDtos.Device{httpDevice(srv.URL, true, true)}},
+		Logs:       lw,
+		Console:    pub,
+		Registry:   dispatch.NewRegistry(),
+		Connectors: session.NewConnectorRegistry(),
 	})
 
 	eng.OnMount()
@@ -136,10 +150,11 @@ func TestEngine_DisabledDeviceDoesNotFire(t *testing.T) {
 	defer srv.Close()
 
 	eng := New(di.EngineServiceDI{
-		Devices:  &fakeDevices{list: []devicesDtos.Device{httpDevice(srv.URL, false, true)}},
-		Logs:     &fakeLogWriter{},
-		Console:  &fakePublisher{},
-		Registry: dispatch.NewRegistry(),
+		Devices:    &fakeDevices{list: []devicesDtos.Device{httpDevice(srv.URL, false, true)}},
+		Logs:       &fakeLogWriter{},
+		Console:    &fakePublisher{},
+		Registry:   dispatch.NewRegistry(),
+		Connectors: session.NewConnectorRegistry(),
 	})
 	eng.OnMount()
 	time.Sleep(1200 * time.Millisecond)

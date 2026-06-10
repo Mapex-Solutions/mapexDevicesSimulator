@@ -116,12 +116,61 @@
 		</template>
 
 		<div v-else class="mqtt-config__none">{{ t('connections.mqtt.authNoneHint') }}</div>
+
+		<q-separator class="mqtt-config__sep" />
+
+		<q-toggle
+			:model-value="modelValue.receiveEnabled ?? false"
+			:label="t('connections.mqtt.receiveEnabled')"
+			@update:model-value="(val) => patch({ receiveEnabled: !!val })"
+		/>
+		<div class="mqtt-config__none">{{ t('connections.mqtt.receiveHint') }}</div>
+
+		<template v-if="modelValue.receiveEnabled">
+			<div v-for="(sub, index) in subscriptions" :key="index" class="mqtt-config__sub">
+				<q-input
+					class="mqtt-config__field"
+					:model-value="sub.name"
+					:label="t('connections.mqtt.subName')"
+					outlined
+					dense
+					stack-label
+					hide-bottom-space
+					@update:model-value="(val) => updateSub(index, { name: String(val ?? '') })"
+				/>
+				<q-input
+					class="mqtt-config__field"
+					:model-value="sub.topic"
+					:label="`${t('connections.mqtt.subTopic')} *`"
+					outlined
+					dense
+					stack-label
+					hide-bottom-space
+					@update:model-value="(val) => updateSub(index, { topic: String(val ?? '') })"
+				/>
+				<q-select
+					class="mqtt-config__qos"
+					:model-value="sub.qos"
+					:options="qosOptions"
+					:label="t('connections.mqtt.subQos')"
+					outlined
+					dense
+					stack-label
+					hide-bottom-space
+					emit-value
+					map-options
+					@update:model-value="(val) => updateSub(index, { qos: val })"
+				/>
+				<q-btn flat round dense icon="mdi-close" :aria-label="t('common.remove')" @click="removeSub(index)" />
+			</div>
+			<q-btn flat dense icon="mdi-plus" :label="t('connections.mqtt.subAdd')" @click="addSub" />
+		</template>
 	</div>
 </template>
 
 <script setup lang="ts">
 /** TYPE IMPORTS */
-import type { MqttAuthMode } from '@services/sim';
+import type { MqttAuthMode, MqttQoS, MqttSubscription } from '@services/sim';
 import type { MqttConnectionConfigEmits, MqttConnectionConfigProps } from './interfaces';
 
 /** VUE IMPORTS */
@@ -144,6 +193,14 @@ const authOptions = computed<{ label: string; value: MqttAuthMode }[]>(() => [
 	{ label: t('connections.mqtt.authTls'), value: 'tls' },
 ]);
 
+const subscriptions = computed<MqttSubscription[]>(() => props.modelValue.subscriptions ?? []);
+
+const qosOptions: { label: string; value: MqttQoS }[] = [
+	{ label: 'QoS 0', value: 0 },
+	{ label: 'QoS 1', value: 1 },
+	{ label: 'QoS 2', value: 2 },
+];
+
 /** FUNCTIONS */
 
 /**
@@ -161,6 +218,30 @@ function requiredRule(value: string | null | undefined): true | string {
  */
 function patch(partial: Partial<MqttConnectionConfigProps['modelValue']>): void {
 	emit('update:modelValue', { ...props.modelValue, ...partial });
+}
+
+/**
+ * Append a blank downlink subscription row.
+ */
+function addSub(): void {
+	patch({ subscriptions: [...subscriptions.value, { name: '', topic: '', qos: 0 }] });
+}
+
+/**
+ * Merge changed fields into one subscription row.
+ * @param {number} index - the row index
+ * @param {Partial<MqttSubscription>} partial - changed fields
+ */
+function updateSub(index: number, partial: Partial<MqttSubscription>): void {
+	patch({ subscriptions: subscriptions.value.map((sub, i) => (i === index ? { ...sub, ...partial } : sub)) });
+}
+
+/**
+ * Remove one subscription row.
+ * @param {number} index - the row index
+ */
+function removeSub(index: number): void {
+	patch({ subscriptions: subscriptions.value.filter((_, i) => i !== index) });
 }
 </script>
 
@@ -190,6 +271,20 @@ function patch(partial: Partial<MqttConnectionConfigProps['modelValue']>): void 
 		font-size: var(--mapex-font-sm);
 		color: var(--mapex-text-muted);
 		font-style: italic;
+	}
+
+	&__sep {
+		margin: var(--mapex-spacing-xs) 0;
+	}
+
+	&__sub {
+		display: flex;
+		gap: var(--mapex-spacing-sm);
+		align-items: flex-start;
+	}
+
+	&__qos {
+		flex: 0 0 120px;
 	}
 }
 </style>

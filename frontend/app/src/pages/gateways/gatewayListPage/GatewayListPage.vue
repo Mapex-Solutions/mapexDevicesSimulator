@@ -79,6 +79,7 @@ import { ListCardEmpty } from '@components/ListCardEmpty';
 
 /** COMPOSABLES */
 import { useTranslations } from '@composables/i18n';
+import { useGatewayConnections } from '@composables/gateways';
 
 /** UTILS */
 import { useQuasar } from 'quasar';
@@ -94,21 +95,32 @@ const { t } = useTranslations();
 const $q = useQuasar();
 const router = useRouter();
 const gatewaysStore = useGatewaysStore();
+const { connectionOf } = useGatewayConnections();
 
 const LINK_ICON: Record<string, string> = {
 	basicstation: 'mdi-access-point',
 	udp: 'mdi-lan-connect',
 };
 
+const CONNECTION_COLOR: Record<string, string> = {
+	online: 'positive',
+	connecting: 'warning',
+	offline: 'negative',
+	unknown: 'grey',
+};
+
 /** STATE */
-const columnVisibility = ref({ link: true, region: true, status: true, created: true });
+const columnVisibility = ref({ link: true, region: true, connection: true, status: true, created: true });
 
 /** COMPUTED */
-const gateways = computed(() => gatewaysStore.items);
+const gateways = computed(() =>
+	gatewaysStore.items.map((gateway) => ({ ...gateway, connection: connectionOf(gateway.id) })),
+);
 
 const menuColumns = computed<ListHeaderMenuColumn[]>(() => [
 	{ key: 'link', label: t('gateways.col.link'), visible: columnVisibility.value.link },
 	{ key: 'region', label: t('gateways.col.region'), visible: columnVisibility.value.region },
+	{ key: 'connection', label: t('gateways.col.connection'), visible: columnVisibility.value.connection },
 	{ key: 'status', label: t('gateways.col.status'), visible: columnVisibility.value.status },
 	{ key: 'created', label: t('gateways.col.created'), visible: columnVisibility.value.created },
 ]);
@@ -118,6 +130,7 @@ const gatewayColumns = computed<DataRowColumn[]>(() => [
 	{ key: 'name', label: t('gateways.col.name'), type: 'text', visible: 'always', width: 240, ellipsis: true, secondaryKey: 'eui' },
 	{ key: 'link', label: t('gateways.col.link'), type: 'text', visible: 'laptop', ellipsis: true, format: (_v, row) => linkTargetOf(row) },
 	{ key: 'region', label: t('gateways.col.region'), type: 'chip', visible: 'always', width: 110, color: () => 'primary' },
+	{ key: 'connection', label: t('gateways.col.connection'), type: 'chip', visible: 'always', width: 120, format: (v) => t(`gatewayConn.${v as string}`), color: (v) => CONNECTION_COLOR[v as string] ?? 'grey' },
 	{ key: 'enabled', label: t('gateways.col.status'), type: 'chip', visible: 'always', width: 110, format: (v) => (v ? t('devices.on') : t('devices.off')), color: (v) => (v ? 'positive' : 'grey') },
 	{ key: 'created', label: t('gateways.col.created'), type: 'text', visible: 'laptop', width: 130, format: (v) => formatDate(v as string) },
 ]);
@@ -126,6 +139,7 @@ const visibleColumns = computed(() =>
 	gatewayColumns.value.filter((col) => {
 		if (col.key === 'link') return columnVisibility.value.link;
 		if (col.key === 'region') return columnVisibility.value.region;
+		if (col.key === 'connection') return columnVisibility.value.connection;
 		if (col.key === 'enabled') return columnVisibility.value.status;
 		if (col.key === 'created') return columnVisibility.value.created;
 		return true;
@@ -162,6 +176,7 @@ function handleColumnsUpdate(columns: ListHeaderMenuColumn[]): void {
 	for (const col of columns) {
 		if (col.key === 'link') columnVisibility.value.link = col.visible;
 		if (col.key === 'region') columnVisibility.value.region = col.visible;
+		if (col.key === 'connection') columnVisibility.value.connection = col.visible;
 		if (col.key === 'status') columnVisibility.value.status = col.visible;
 		if (col.key === 'created') columnVisibility.value.created = col.visible;
 	}

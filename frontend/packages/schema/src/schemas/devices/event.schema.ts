@@ -1,5 +1,5 @@
 import { z } from '../common/primitives.schema';
-import { ZodKeyValueSchema, ZodHttpMethodSchema } from './protocol.schema';
+import { ZodKeyValueSchema, ZodHttpMethodSchema, ZodMqttQoSSchema } from './protocol.schema';
 
 /**
  * How a request body is authored: no body, raw text (JSON), or form fields
@@ -20,9 +20,6 @@ export const ZodHttpEventConfigSchema = ZodRequestBodySchema.extend({
 	path: z.string(),
 	headers: z.array(ZodKeyValueSchema),
 });
-
-/** MQTT publish quality of service. */
-export const ZodMqttQoSSchema = z.union([z.literal(0), z.literal(1), z.literal(2)]);
 
 /** MQTT event configuration: where and how the payload is published. */
 export const ZodMqttEventConfigSchema = ZodRequestBodySchema.extend({

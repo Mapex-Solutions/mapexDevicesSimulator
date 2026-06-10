@@ -8,6 +8,9 @@ require (
 	github.com/Mapex-Solutions/mapexGoKit/utils v0.0.0
 	github.com/gofiber/contrib/websocket v1.3.4
 	github.com/gofiber/fiber/v2 v2.52.9
+	github.com/google/uuid v1.6.0
+	github.com/gorilla/websocket v1.5.3
+	github.com/jacobsa/crypto v0.0.0-20190317225127-9f44e2d11115
 	go.uber.org/dig v1.19.0
 )
 
@@ -30,8 +33,10 @@ require (
 	github.com/go-playground/validator/v10 v10.27.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
+	github.com/jacobsa/oglematchers v0.0.0-20150720000706-141901ea67cd // indirect
+	github.com/jacobsa/oglemock v0.0.0-20150831005832-e94d794d06ff // indirect
+	github.com/jacobsa/ogletest v0.0.0-20170503003838-80d50a735a11 // indirect
+	github.com/jacobsa/reqtrace v0.0.0-20150505043853-245c9e0234cb // indirect
 	github.com/jinzhu/copier v0.4.0 // indirect
 	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect

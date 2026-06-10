@@ -16,6 +16,7 @@ import (
 func buildSendSpec(d devicescontract.Device, e entities.DeviceEvent) (sendSpec, bool) {
 	spec := sendSpec{
 		protocol:   d.ProtocolID,
+		deviceKey:  d.ID,
 		deviceID:   d.DeviceID,
 		deviceName: d.Name,
 		storeLogs:  d.StoreLogs,
@@ -50,6 +51,14 @@ func buildSendSpec(d devicescontract.Device, e entities.DeviceEvent) (sendSpec, 
 		spec.qos = byte(e.MQTT.QoS)
 		spec.retain = e.MQTT.Retain
 		spec.payloadTemplate = eventBody(e.MQTT.RequestBody)
+		return spec, true
+	case "lorawan", "basicstation":
+		if e.LoRaWAN == nil {
+			return sendSpec{}, false
+		}
+		spec.fport = byte(e.LoRaWAN.FPort)
+		spec.confirmed = e.LoRaWAN.Confirmed
+		spec.payloadTemplate = e.LoRaWAN.PayloadHex
 		return spec, true
 	default:
 		return sendSpec{}, false

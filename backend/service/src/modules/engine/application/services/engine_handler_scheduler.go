@@ -87,6 +87,7 @@ func (s *EngineService) resyncLoop() {
 			return
 		case <-t.C:
 			s.reconcile()
+			s.reconcileSessions()
 		}
 	}
 }

@@ -49,7 +49,12 @@
 
 <script setup lang="ts">
 /** TYPE IMPORTS */
-import type { HttpEventConfig as HttpEvent, LoraWanEventConfig as LoraEvent, MqttEventConfig as MqttEvent } from '@services/sim';
+import type {
+	DeviceEvent,
+	HttpEventConfig as HttpEvent,
+	LoraWanEventConfig as LoraEvent,
+	MqttEventConfig as MqttEvent,
+} from '@services/sim';
 
 /** VUE IMPORTS */
 import { computed, onMounted, ref, watch } from 'vue';
@@ -67,9 +72,11 @@ import { useTranslations } from '@composables/i18n';
 import { useQuasar } from 'quasar';
 import { buildHttpBody, renderTemplate } from '@utils/template';
 
+/** SERVICES */
+import { sim } from '@services/sim';
+
 /** STORES */
 import { useDevicesStore } from '@stores/devices';
-import { useMessagesStore } from '@stores/messages';
 
 /** PROPS & EMITS */
 const props = defineProps<{ deviceId?: string | null }>();
@@ -79,7 +86,6 @@ const open = defineModel<boolean>({ required: true });
 const { t } = useTranslations();
 const $q = useQuasar();
 const devicesStore = useDevicesStore();
-const messagesStore = useMessagesStore();
 
 /** STATE */
 const selectedDeviceId = ref<string | null>(null);
@@ -165,48 +171,35 @@ function loadEvent(): void {
 }
 
 /**
- * Fire the event: render the template and record it on the console stream.
+ * Build the event to fire from the current form: the engine renders the templates
+ * and sends it, so what is previewed is what is fired (whether a pre-registered
+ * event was loaded then edited, or a blank generic one).
+ * @returns {DeviceEvent} the event payload for the fire request
  */
-function onSend(): void {
-	if (!device.value || !isSupported.value) return;
-
-	const ctx = { deviceId: device.value.deviceId || device.value.id, deviceName: device.value.name };
-	const rendered = isLora.value
-		? renderTemplate(loraConfig.value.payloadHex, ctx)
-		: buildHttpBody(isMqtt.value ? mqttConfig.value : httpConfig.value, ctx);
-	const eventName = eventId.value
-		? (device.value.events.find((item) => item.id === eventId.value)?.name ?? t('fireEvent.generic'))
+function buildFireEvent(): DeviceEvent {
+	const name = eventId.value
+		? (device.value?.events.find((item) => item.id === eventId.value)?.name ?? t('fireEvent.generic'))
 		: t('fireEvent.generic');
-	const status = isLora.value
-		? `FPort ${loraConfig.value.fport}${loraConfig.value.confirmed ? ' · confirmed' : ''}`
-		: isMqtt.value
-			? `${renderTopic(mqttConfig.value.topic, ctx)} (QoS${mqttConfig.value.qos})`
-			: `${httpConfig.value.method} ${httpConfig.value.path}`;
-
-	messagesStore.add({
-		ts: new Date().toLocaleTimeString(),
-		protocol: isLora.value ? 'lorawan' : isMqtt.value ? 'mqtt' : 'http',
-		deviceId: device.value.id,
-		deviceName: device.value.name,
-		direction: 'down',
-		kind: 'downlink',
-		status,
-		summary: eventName,
-		payload: rendered,
-	});
-
-	$q.notify({ type: 'warning', message: t('fireEvent.offline') });
-	open.value = false;
+	const base = { id: eventId.value ?? '', name };
+	if (isLora.value) return { ...base, lorawan: { ...loraConfig.value } };
+	if (isMqtt.value) return { ...base, mqtt: cloneMqtt(mqttConfig.value) };
+	return { ...base, http: cloneHttp(httpConfig.value) };
 }
 
 /**
- * Render the placeholders inside an MQTT topic for the console summary.
- * @param {string} topic - the topic template
- * @param {{ deviceId: string; deviceName: string }} ctx - the render context
- * @returns {string} the rendered topic
+ * Fire the event through the engine. The engine renders + sends over the device's
+ * protocol; the uplink echo and any downlink stream back over the WebSocket.
  */
-function renderTopic(topic: string, ctx: { deviceId: string; deviceName: string }): string {
-	return buildHttpBody({ bodyMode: 'raw', bodyFields: [], body: topic }, ctx);
+async function onSend(): Promise<void> {
+	if (!device.value || !isSupported.value) return;
+
+	try {
+		await sim.devices.fire({ id: device.value.id }, { event: buildFireEvent() });
+		$q.notify({ type: 'positive', message: t('fireEvent.sent') });
+		open.value = false;
+	} catch {
+		$q.notify({ type: 'negative', message: t('fireEvent.failed') });
+	}
 }
 
 /** WATCHERS */

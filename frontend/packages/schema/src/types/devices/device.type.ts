@@ -10,6 +10,8 @@ import {
 	ZodLoraWanMacVersionSchema,
 	ZodHttpConnectionConfigSchema,
 	ZodMqttConnectionConfigSchema,
+	ZodMqttQoSSchema,
+	ZodMqttSubscriptionSchema,
 	ZodLoraWanConnectionConfigSchema,
 	ZodBasicsStationConnectionConfigSchema,
 	ZodProtocolConfigSchema,
@@ -19,7 +21,6 @@ import {
 	ZodHttpBodyModeSchema,
 	ZodRequestBodySchema,
 	ZodHttpEventConfigSchema,
-	ZodMqttQoSSchema,
 	ZodMqttEventConfigSchema,
 	ZodLoraWanEventConfigSchema,
 	ZodEventScheduleUnitSchema,
@@ -39,6 +40,7 @@ export type LoraWanMacVersion = z.infer<typeof ZodLoraWanMacVersionSchema>;
 
 export type HttpConnectionConfig = z.infer<typeof ZodHttpConnectionConfigSchema>;
 export type MqttConnectionConfig = z.infer<typeof ZodMqttConnectionConfigSchema>;
+export type MqttSubscription = z.infer<typeof ZodMqttSubscriptionSchema>;
 export type LoraWanConnectionConfig = z.infer<typeof ZodLoraWanConnectionConfigSchema>;
 export type BasicsStationConnectionConfig = z.infer<typeof ZodBasicsStationConnectionConfigSchema>;
 export type ProtocolConfig = z.infer<typeof ZodProtocolConfigSchema>;

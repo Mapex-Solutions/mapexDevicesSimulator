@@ -104,6 +104,8 @@ export const PROTOCOL_REGISTRY: Partial<Record<ProtocolId, ProtocolDefinition>> 
 			tlsCertPem: '',
 			tlsKeyPem: '',
 			tlsCaPem: '',
+			receiveEnabled: false,
+			subscriptions: [],
 		}),
 		validate: validateConfig,
 	},

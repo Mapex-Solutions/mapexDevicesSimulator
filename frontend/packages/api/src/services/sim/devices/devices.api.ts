@@ -1,6 +1,6 @@
 /** TYPE IMPORTS */
 import type { AxiosInstance } from 'axios';
-import type { Device, DeviceInput } from '@sim/schema';
+import type { Device, DeviceInput, DeviceEvent } from '@sim/schema';
 
 /** SCHEMAS */
 import { ZodDeviceInputSchema } from '@sim/schema';
@@ -45,6 +45,13 @@ export function devicesApi(http: AxiosInstance) {
 				path: '/:id',
 				pathParams: {} as { id: string },
 				responseType: undefined as void,
+			},
+			fire: {
+				method: 'POST',
+				path: '/:id/fire',
+				pathParams: {} as { id: string },
+				bodyParams: {} as { eventId?: string; event?: DeviceEvent },
+				responseType: {} as { fired: boolean },
 			},
 		},
 	});

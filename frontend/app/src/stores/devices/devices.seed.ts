@@ -64,6 +64,8 @@ export function seedDevices(): Device[] {
 				tlsCertPem: '',
 				tlsKeyPem: '',
 				tlsCaPem: '',
+				receiveEnabled: false,
+				subscriptions: [],
 			},
 			attributes: {},
 			events: [

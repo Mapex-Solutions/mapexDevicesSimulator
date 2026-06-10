@@ -112,6 +112,7 @@ export default {
 			name: 'Nome',
 			region: 'Região',
 			link: 'Link',
+			connection: 'Conexão',
 			status: 'Status',
 			created: 'Criado em',
 		},
@@ -185,6 +186,8 @@ export default {
 		send: 'Enviar agora',
 		unsupported: 'O disparo deste protocolo chega na fase dele.',
 		offline: 'Motor offline: conecte o motor para enviar eventos.',
+		sent: 'Evento enviado — acompanhe o resultado no console.',
+		failed: 'Não foi possível enviar o evento. Verifique o dispositivo e tente novamente.',
 	},
 	httpEvent: {
 		tabBody: 'Corpo',
@@ -287,6 +290,12 @@ export default {
 			link: 'Link LNS',
 			linkDesc: 'Conexão com o LNS',
 		},
+	},
+	gatewayConn: {
+		online: 'Online',
+		connecting: 'Conectando',
+		offline: 'Offline',
+		unknown: '—',
 	},
 	gatewayLink: {
 		protocol: 'Protocolo',
@@ -427,6 +436,12 @@ export default {
 			tlsKey: 'Chave privada (PEM)',
 			tlsCa: 'Certificado CA (PEM)',
 			authNoneHint: 'Este broker aceita conexões anônimas.',
+				receiveEnabled: 'Receber eventos (subscribe)',
+				receiveHint: 'Quando ativo, o dispositivo mantém a assinatura nesses tópicos e mostra cada mensagem recebida no console como downlink.',
+				subName: 'Nome',
+				subTopic: 'Tópico',
+				subQos: 'QoS',
+				subAdd: 'Adicionar assinatura',
 		},
 		lorawan: {
 			gateway: 'Gateway',

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,12 +12,31 @@ import (
 	logsDtos "simulator/service/src/modules/logs/application/dtos"
 )
 
-// process renders the payload, dispatches it over the device's protocol, and
-// reports the result to the console (always) and the logs (when storeLogs is on).
+// process renders the payload, sends it over the device's protocol, and reports
+// the result to the console (always) and the logs (when storeLogs is on).
+//
+// For a session-capable protocol with a live connection, the uplink goes through
+// that open session (reusing the connection); otherwise — HTTP, or MQTT while a
+// session is still connecting/reconnecting — it falls back to the one-shot
+// dispatcher so a send is never silently dropped.
 func (s *EngineService) process(task fireTask) {
 	spec := task.spec
 	payload := domainsvc.Render(spec.payloadTemplate, spec.deviceID, task.counter)
 	req, summary := s.buildRequest(spec, payload, task.counter)
+
+	if sess, ok := s.liveSession(spec.deviceKey); ok {
+		res := sess.Send(s.ctx, enginePorts.OutboundMessage{
+			Topic:     req.Topic,
+			QoS:       req.QoS,
+			Retain:    req.Retain,
+			Payload:   payload,
+			FPort:     spec.fport,
+			Confirmed: spec.confirmed,
+		})
+		s.report(spec, payload, summary, enginePorts.DispatchResult{OK: res.OK, Status: res.Status, Err: res.Err})
+		return
+	}
+
 	disp, ok := s.deps.Registry.For(spec.protocol)
 	if !ok {
 		return
@@ -49,6 +69,9 @@ func (s *EngineService) buildRequest(spec sendSpec, payload string, counter int6
 			Retain:    spec.retain,
 			Payload:   payload,
 		}, "PUBLISH " + topic
+	case "lorawan", "basicstation":
+		return enginePorts.DispatchRequest{Payload: payload},
+			fmt.Sprintf("Uplink FPort %d", spec.fport)
 	default:
 		return enginePorts.DispatchRequest{Payload: payload}, ""
 	}

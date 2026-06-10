@@ -4,6 +4,7 @@ import (
 	"container/heap"
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"simulator/service/src/modules/engine/application/di"
@@ -20,6 +21,11 @@ type EngineService struct {
 	jobs    map[string]*job // key -> running job
 	started bool
 
+	sessMu   sync.Mutex
+	sessions map[string]*sessionHandle // deviceID -> live session supervisor
+
+	fireSeq atomic.Int64 // counter for on-demand fires ({{counter}} rendering)
+
 	fires  chan fireTask
 	wake   chan struct{}
 	ctx    context.Context
@@ -31,7 +37,8 @@ type EngineService struct {
 // the payload template (rendered at fire time).
 type sendSpec struct {
 	protocol   string
-	deviceID   string
+	deviceKey  string // server id (d.ID); used to find the device's live session
+	deviceID   string // user-facing id (d.DeviceID); drives {{deviceId}}
 	deviceName string
 	storeLogs  bool
 
@@ -48,6 +55,10 @@ type sendSpec struct {
 	topic     string
 	qos       byte
 	retain    bool
+
+	// lorawan
+	fport     byte
+	confirmed bool
 
 	payloadTemplate string
 }

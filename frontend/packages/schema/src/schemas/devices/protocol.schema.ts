@@ -34,9 +34,25 @@ export const ZodHttpConnectionConfigSchema = z.object({
 	basicPass: z.string(),
 });
 
+/** MQTT QoS level shared by publishes and subscriptions. */
+export const ZodMqttQoSSchema = z.union([z.literal(0), z.literal(1), z.literal(2)]);
+
+/**
+ * One downlink topic the device subscribes to when receiving is enabled. The name
+ * is a human label shown on the console; the topic is prefixed by the device's
+ * baseTopic at send time.
+ */
+export const ZodMqttSubscriptionSchema = z.object({
+	name: z.string(),
+	topic: z.string(),
+	qos: ZodMqttQoSSchema,
+});
+
 /**
  * MQTT target configuration. Auth is either username/password or a TLS client
- * certificate; credentials and PEM material are sent only at run time.
+ * certificate; credentials and PEM material are sent only at run time. When
+ * receiveEnabled is on, the engine keeps the session subscribed to `subscriptions`
+ * and streams each received message to the console as a downlink.
  */
 export const ZodMqttConnectionConfigSchema = z.object({
 	kind: z.literal('mqtt'),
@@ -49,6 +65,8 @@ export const ZodMqttConnectionConfigSchema = z.object({
 	tlsCertPem: z.string(),
 	tlsKeyPem: z.string(),
 	tlsCaPem: z.string(),
+	receiveEnabled: z.boolean().default(false),
+	subscriptions: z.array(ZodMqttSubscriptionSchema).default([]),
 });
 
 /**

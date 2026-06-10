@@ -15,11 +15,12 @@ var _ ports.EnginePort = (*EngineService)(nil)
 // New builds the engine service. It does not start anything; OnMount does.
 func New(deps di.EngineServiceDI) ports.EnginePort {
 	return &EngineService{
-		deps:  deps,
-		heap:  &jobHeap{},
-		jobs:  make(map[string]*job),
-		fires: make(chan fireTask, fireBuffer),
-		wake:  make(chan struct{}, 1),
+		deps:     deps,
+		heap:     &jobHeap{},
+		jobs:     make(map[string]*job),
+		sessions: make(map[string]*sessionHandle),
+		fires:    make(chan fireTask, fireBuffer),
+		wake:     make(chan struct{}, 1),
 	}
 }
 
@@ -30,6 +31,7 @@ func (s *EngineService) OnMount() {
 		return
 	}
 	s.reconcile()
+	s.reconcileSessions()
 	s.startWorkers()
 	s.startScheduler()
 	s.startResync()
@@ -43,6 +45,7 @@ func (s *EngineService) Reconcile() {
 		return
 	}
 	s.reconcile()
+	s.reconcileSessions()
 }
 
 // OnShutdown cancels the scheduler + workers and waits for them to drain.
