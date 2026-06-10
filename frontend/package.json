@@ -1,0 +1,23 @@
+{
+  "name": "mapex-devices-simulator-frontend",
+  "version": "0.0.1",
+  "description": "Frontend workspace for the Mapex Devices Simulator: the Quasar app plus its schema and api packages.",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "app",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm -w app run dev",
+    "dev:electron": "npm -w app run dev:electron",
+    "build": "npm -w app run build",
+    "build:electron": "npm -w app run build:electron",
+    "type-check": "npm -w app run type-check",
+    "test": "npm -w app run test"
+  },
+  "engines": {
+    "node": "^28 || ^26 || ^24",
+    "npm": ">= 6.13.4"
+  }
+}

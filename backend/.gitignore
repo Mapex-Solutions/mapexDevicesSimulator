@@ -1,0 +1,8 @@
+# Local database + build output
+/data/
+/bin/
+simulatord
+
+# Embedded SPA is build-generated; keep only the placeholder.
+/service/src/shared/web/dist/*
+!/service/src/shared/web/dist/index.html

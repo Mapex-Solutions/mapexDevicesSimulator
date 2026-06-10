@@ -1,0 +1,18 @@
+# Local SQLite databases (any location; per-dir rules miss nested data dirs)
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Node dependencies (safety net; per-package .gitignore also applies)
+node_modules/
+
+# Claude Code local-only files (shared skills/agents/settings are kept)
+.claude/settings.local.json
+.claude/worktrees/
+
+# OS and log noise
+*.log
+.DS_Store

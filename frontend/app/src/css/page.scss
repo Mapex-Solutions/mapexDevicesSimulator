@@ -1,0 +1,68 @@
+// Shared page chrome used across the tool's CRUD pages. Kept global (not scoped)
+// so list/empty/row/dialog layout stays consistent without repeating styles.
+
+.sim-page {
+	max-width: 980px;
+	margin: 0 auto;
+}
+
+.sim-page__header {
+	margin-bottom: var(--mapex-spacing-lg);
+}
+
+.sim-page__title {
+	font-size: 1.5rem;
+	font-weight: var(--mapex-font-weight-semibold);
+	color: var(--mapex-text-primary);
+	margin: 0;
+}
+
+.sim-page__subtitle {
+	color: var(--mapex-text-secondary);
+	margin: var(--mapex-spacing-2xs) 0 0;
+	font-size: var(--mapex-font-sm);
+}
+
+.sim-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--mapex-spacing-md);
+	padding: var(--mapex-spacing-3xl);
+	text-align: center;
+	color: var(--mapex-text-muted);
+	border-radius: var(--mapex-radius-lg);
+	border-color: var(--mapex-card-border);
+	background: var(--mapex-surface-elevated);
+}
+
+.sim-row-card {
+	padding: var(--mapex-spacing-md) var(--mapex-spacing-lg);
+	gap: var(--mapex-spacing-sm);
+	border-radius: var(--mapex-radius-md);
+	border-color: var(--mapex-card-border);
+	background: var(--mapex-surface-elevated);
+}
+
+.sim-row-card__name {
+	font-weight: var(--mapex-font-weight-medium);
+	color: var(--mapex-text-primary);
+}
+
+.sim-row-card__meta {
+	font-size: var(--mapex-font-sm);
+	color: var(--mapex-text-secondary);
+	margin-top: var(--mapex-spacing-2xs);
+}
+
+.sim-dialog {
+	min-width: 520px;
+	max-width: 90vw;
+	border-radius: var(--mapex-radius-lg);
+}
+
+.sim-dialog__title {
+	font-size: var(--mapex-font-lg);
+	font-weight: var(--mapex-font-weight-semibold);
+	color: var(--mapex-text-primary);
+}

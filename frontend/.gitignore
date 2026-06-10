@@ -1,0 +1,14 @@
+# Dependencies (hoisted to the workspace root and per-package)
+node_modules/
+
+# Build outputs
+dist/
+.quasar/
+*.tsbuildinfo
+
+# Quasar temporary compiled config
+quasar.config.*.temporary.compiled*
+
+# Logs and OS noise
+*.log
+.DS_Store
