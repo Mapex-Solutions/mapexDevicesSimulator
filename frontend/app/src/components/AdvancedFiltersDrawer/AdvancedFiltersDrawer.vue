@@ -198,13 +198,6 @@ const emit = defineEmits<AdvancedFiltersDrawerEmits>();
 /** COMPOSABLES & STORES */
 const t = useAdvancedFiltersDrawerTranslations();
 
-/** COMPUTED */
-
-/**
- * Drawer title - uses prop if provided, otherwise uses translation
- */
-const drawerTitle = computed(() => props.title || t.title.value);
-
 /** STATE */
 const localValues = ref<FilterValues>({});
 const appliedValuesSnapshot = ref<FilterValues>({});
@@ -212,12 +205,40 @@ const autocompleteOptions = ref<Record<string, FilterAutocompleteOption[]>>({});
 const autocompleteLoading = ref<Record<string, boolean>>({});
 const autocompleteLabels = ref<Record<string, string>>({});
 
+/** COMPUTED */
+
+/**
+ * Drawer title - uses prop if provided, otherwise uses translation
+ */
+const drawerTitle = computed(() => props.title || t.title.value);
+
 /**
  * Check if there are pending (unapplied) changes
  * Compares current local values with the snapshot taken when drawer opened
  */
 const hasPendingChanges = computed(() => {
   return JSON.stringify(localValues.value) !== JSON.stringify(appliedValuesSnapshot.value);
+});
+
+/** WATCHERS */
+
+// Watch for values changes from parent
+watch(() => props.values, () => {
+  initializeValues();
+}, { deep: true, immediate: true });
+
+// Watch for drawer open - take snapshot of applied values
+watch(() => props.modelValue, (isOpen) => {
+  if (isOpen) {
+    initializeValues();
+    // Take snapshot of current applied values for comparison
+    appliedValuesSnapshot.value = JSON.parse(JSON.stringify(localValues.value));
+  }
+});
+
+// Emit pending state changes
+watch(hasPendingChanges, (pending) => {
+  emit('pending-change', pending);
 });
 
 /** FUNCTIONS */
@@ -332,29 +353,6 @@ function initializeValues(): void {
   }
   localValues.value = values;
 }
-
-/** WATCHERS */
-
-// Watch for values changes from parent
-watch(() => props.values, () => {
-  initializeValues();
-}, { deep: true, immediate: true });
-
-// Watch for drawer open - take snapshot of applied values
-watch(() => props.modelValue, (isOpen) => {
-  if (isOpen) {
-    initializeValues();
-    // Take snapshot of current applied values for comparison
-    appliedValuesSnapshot.value = JSON.parse(JSON.stringify(localValues.value));
-  }
-});
-
-// Emit pending state changes
-watch(hasPendingChanges, (pending) => {
-  emit('pending-change', pending);
-});
-
-/** FUNCTIONS - KEYBOARD */
 
 /**
  * Handle Enter key to apply filters when drawer is open

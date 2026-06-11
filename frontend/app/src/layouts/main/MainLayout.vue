@@ -75,18 +75,18 @@ function toggleDrawer(): void {
   max-width: 1280px;
   width: 100%;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 var(--mapex-spacing-lg);
 }
 
 @media (min-width: 1024px) {
   .container {
-    padding: 0 24px;
+    padding: 0 var(--mapex-spacing-2xl);
   }
 }
 
 @media (min-width: 1440px) {
   .container {
-    padding: 0 32px;
+    padding: 0 var(--mapex-spacing-3xl);
   }
 }
 
@@ -96,9 +96,9 @@ body {
 
 :deep(.menu-parent-item) {
   border-radius: 0 var(--mapex-radius-md) var(--mapex-radius-md) 0;
-  margin: 4px 0;
+  margin: var(--mapex-spacing-xs) 0;
   transition: var(--mapex-transition-base);
-  padding: 8px 16px;
+  padding: var(--mapex-spacing-sm) var(--mapex-spacing-lg);
 
   &:hover {
     background: rgba(var(--q-primary-rgb), 0.05);
@@ -141,7 +141,7 @@ body {
 .app-footer__link {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--mapex-spacing-xs);
   color: var(--mapex-primary);
   font-weight: var(--mapex-font-weight-medium);
   text-decoration: none;

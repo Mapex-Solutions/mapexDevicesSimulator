@@ -122,6 +122,21 @@ const preview = computed(() =>
 		: buildHttpBody(isMqtt.value ? mqttConfig.value : httpConfig.value, renderCtx.value),
 );
 
+/** WATCHERS */
+watch(open, (isOpen) => {
+	if (!isOpen) return;
+	selectedDeviceId.value = props.deviceId ?? selectedDeviceId.value;
+	eventId.value = null;
+	resetConfigs();
+});
+
+watch(selectedDeviceId, () => {
+	eventId.value = null;
+	resetConfigs();
+});
+
+watch(eventId, loadEvent);
+
 /** FUNCTIONS */
 
 /**
@@ -201,21 +216,6 @@ async function onSend(): Promise<void> {
 		$q.notify({ type: 'negative', message: t('fireEvent.failed') });
 	}
 }
-
-/** WATCHERS */
-watch(open, (isOpen) => {
-	if (!isOpen) return;
-	selectedDeviceId.value = props.deviceId ?? selectedDeviceId.value;
-	eventId.value = null;
-	resetConfigs();
-});
-
-watch(selectedDeviceId, () => {
-	eventId.value = null;
-	resetConfigs();
-});
-
-watch(eventId, loadEvent);
 
 /** LIFECYCLE HOOKS */
 onMounted(() => {

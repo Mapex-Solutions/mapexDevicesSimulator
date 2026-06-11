@@ -196,9 +196,9 @@ const authOptions = computed<{ label: string; value: MqttAuthMode }[]>(() => [
 const subscriptions = computed<MqttSubscription[]>(() => props.modelValue.subscriptions ?? []);
 
 const qosOptions: { label: string; value: MqttQoS }[] = [
-	{ label: 'QoS 0', value: 0 },
-	{ label: 'QoS 1', value: 1 },
-	{ label: 'QoS 2', value: 2 },
+	{ label: '0', value: 0 },
+	{ label: '1', value: 1 },
+	{ label: '2', value: 2 },
 ];
 
 /** FUNCTIONS */
