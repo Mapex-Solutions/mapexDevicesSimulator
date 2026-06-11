@@ -30,6 +30,7 @@ const joinTimeout = 6 * time.Second
 type lorawanConnector struct {
 	mu    sync.Mutex
 	links map[string]*sharedLink
+	devs  map[string]*device.Session // keyed by DevEUI; persists DevNonce across reconnects
 }
 
 // lorawanSession is one device's live LoRaWAN session over a shared gateway link.
@@ -44,7 +45,27 @@ type lorawanSession struct {
 // NewLoRaWAN builds the LoRaWAN connector (serves both the lorawan and basicstation
 // protocol ids; the difference is only where the link config comes from).
 func NewLoRaWAN() ports.Connector {
-	return &lorawanConnector{links: make(map[string]*sharedLink)}
+	return &lorawanConnector{
+		links: make(map[string]*sharedLink),
+		devs:  make(map[string]*device.Session),
+	}
+}
+
+// deviceFor returns the persistent device brain for a DevEUI, creating it on first
+// use. Reusing it across reconnects keeps the DevNonce monotonic, which OTAA join
+// servers require (a reused DevNonce is rejected as a replay).
+func (c *lorawanConnector) deviceFor(spec *ports.LoRaWANSpec) (*device.Session, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if d, ok := c.devs[spec.DevEUI]; ok {
+		return d, nil
+	}
+	d, err := buildDeviceSession(spec)
+	if err != nil {
+		return nil, err
+	}
+	c.devs[spec.DevEUI] = d
+	return d, nil
 }
 
 // Protocol identifies this connector. It is also registered under basicstation in
@@ -58,7 +79,7 @@ func (c *lorawanConnector) Open(ctx context.Context, spec ports.SessionSpec, in 
 		return nil, errors.New("lorawan: missing LoRaWAN spec")
 	}
 	region := band.Get(spec.LoRaWAN.Region)
-	dev, err := buildDeviceSession(spec.LoRaWAN)
+	dev, err := c.deviceFor(spec.LoRaWAN)
 	if err != nil {
 		return nil, err
 	}
@@ -71,15 +92,22 @@ func (c *lorawanConnector) Open(ctx context.Context, spec ports.SessionSpec, in 
 	sess := &lorawanSession{dev: dev, link: link, conn: c, region: region}
 	deliver := func(phy []byte) { sess.onDownlink(phy, in) }
 
-	if spec.LoRaWAN.Activation == "otaa" {
+	switch {
+	case spec.LoRaWAN.Activation == "abp":
+		sess.addr = dev.DevAddr()
+		link.router.bind(sess.addr, deliver)
+		status("activated", "ABP")
+	case dev.Joined():
+		// Already joined on a previous connection: resume rather than re-join, so a
+		// transient reconnect does not burn a DevNonce or reset the session.
+		sess.addr = dev.DevAddr()
+		link.router.bind(sess.addr, deliver)
+		status("joined", hex.EncodeToString(sess.addr[:]))
+	default:
 		if err := sess.join(link, status, deliver); err != nil {
 			c.releaseLink(link)
 			return nil, err
 		}
-	} else {
-		sess.addr = dev.DevAddr()
-		link.router.bind(sess.addr, deliver)
-		status("activated", "ABP")
 	}
 	return sess, nil
 }
@@ -100,7 +128,7 @@ func (s *lorawanSession) join(link *sharedLink, status ports.StatusSink, deliver
 		return err
 	}
 	status("join-request", "")
-	if err := link.transport.sendUp(phy, s.region.UplinkSF, s.region.UplinkFrequency, dataRate(s.region.UplinkSF), -42, 9.0); err != nil {
+	if err := link.transport.sendUp(phy, s.region.UplinkDR, s.region.UplinkFrequency, dataRate(s.region.UplinkSF), -42, 9.0); err != nil {
 		return err
 	}
 
@@ -129,7 +157,7 @@ func (s *lorawanSession) Send(_ context.Context, msg ports.OutboundMessage) port
 	if err != nil {
 		return ports.SendResult{Err: err}
 	}
-	if err := s.link.transport.sendUp(phy, s.region.UplinkSF, s.region.UplinkFrequency, dataRate(s.region.UplinkSF), -42, 9.0); err != nil {
+	if err := s.link.transport.sendUp(phy, s.region.UplinkDR, s.region.UplinkFrequency, dataRate(s.region.UplinkSF), -42, 9.0); err != nil {
 		return ports.SendResult{Err: err}
 	}
 	return ports.SendResult{OK: true, Status: fmt.Sprintf("FCnt %d", s.dev.FCntUp()-1)}

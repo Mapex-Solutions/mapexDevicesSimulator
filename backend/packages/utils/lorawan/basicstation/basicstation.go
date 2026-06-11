@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 // errShort is returned when an uplink PHYPayload is too short to decompose.
@@ -25,6 +26,18 @@ type UpInfo struct {
 	SNR    float64 `json:"snr"`
 	RxTime float64 `json:"rxtime"`
 	XTime  int64   `json:"xtime"`
+}
+
+// euiID6 renders a little-endian EUI (as it sits on the wire) into the Basics
+// Station "id6" string the LNS expects: four 16-bit groups, MSB-first, joined by
+// colons (e.g. "0011:2233:4455:66aa").
+func euiID6(le []byte) string {
+	b := make([]byte, len(le))
+	for i := range le {
+		b[len(le)-1-i] = le[i]
+	}
+	return fmt.Sprintf("%02x%02x:%02x%02x:%02x%02x:%02x%02x",
+		b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7])
 }
 
 // VersionMessage is the first frame a gateway sends after the WebSocket opens; the
@@ -56,8 +69,8 @@ func MarshalUplink(phy []byte, dr int, freq uint64, info UpInfo) ([]byte, error)
 		return json.Marshal(map[string]any{
 			"msgtype":  "jreq",
 			"MHdr":     int(mhdr),
-			"JoinEui":  int64(binary.LittleEndian.Uint64(body[0:8])),
-			"DevEui":   int64(binary.LittleEndian.Uint64(body[8:16])),
+			"JoinEui":  euiID6(body[0:8]),
+			"DevEui":   euiID6(body[8:16]),
 			"DevNonce": int(binary.LittleEndian.Uint16(body[16:18])),
 			"MIC":      mic,
 			"DR":       dr,

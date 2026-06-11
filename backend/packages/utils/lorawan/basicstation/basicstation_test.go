@@ -39,6 +39,26 @@ func TestMarshalUplinkClassifiesByMHDR(t *testing.T) {
 	}
 }
 
+func TestMarshalUplinkEncodesEUIsAsId6(t *testing.T) {
+	// Join request: MHDR | JoinEUI(8 LE) | DevEUI(8 LE) | DevNonce(2) | MIC(4).
+	phy := make([]byte, 23)
+	// DevEUI 0011223344556677 sits little-endian at body[8:16] = phy[9:17].
+	copy(phy[9:17], []byte{0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00})
+
+	out, err := MarshalUplink(phy, 5, 868_100_000, UpInfo{})
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var m map[string]any
+	if err := json.Unmarshal(out, &m); err != nil {
+		t.Fatalf("json: %v", err)
+	}
+	// ChirpStack's EUI64 type rejects numbers; the id6 string is required.
+	if m["DevEui"] != "0011:2233:4455:6677" {
+		t.Fatalf("DevEui = %v, want id6 string 0011:2233:4455:6677", m["DevEui"])
+	}
+}
+
 func TestParseDownlinkExtractsPDU(t *testing.T) {
 	phy := []byte{0x60, 0x11, 0x22, 0x33}
 	frame, _ := json.Marshal(map[string]any{"msgtype": "dnmsg", "pdu": hex.EncodeToString(phy)})

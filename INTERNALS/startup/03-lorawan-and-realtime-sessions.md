@@ -213,14 +213,38 @@ the simulator the device carries `macVersion: "1.1.0"` plus both `appKey` and `n
 ABP still uses the legacy MIC path (1.1 ABP would need three preset network keys we
 don't model).
 
-## 8. What's done vs pending
+## 8. Basics Station (also verified live)
 
-Done (verified live against ChirpStack over Semtech UDP): MQTT inbound; LoRaWAN OTAA
-**1.0.x AND 1.1** join + data uplinks; gateway-online stats; full crypto parity; the
-fire-event REST endpoint; a real Dragino LHT65N payload decoded by a vendor codec; the
-frontend pieces (subscriptions step, real fire dialog, derived gateway status).
+The Basics Station WebSocket transport is now proven end-to-end against ChirpStack
+too (join + data uplinks decrypted, the LHT65N decoded). ChirpStack runs a separate
+gateway-bridge for it (`:3001`, EU868). What it took, all of it learned on the wire:
+- **Endpoint:** the gateway connects directly to `ws://host:3001/gw/<gateway-eui>`
+  (lowercase). ChirpStack does NOT use the `/router-info` discovery step; connect to
+  the data endpoint, send `version`, receive `router_config`. `dialWS` appends
+  `/gw/<eui>` when the configured LNS URI has no path.
+- **EUIs are id6 strings, not numbers.** TTS's lbslns encodes JoinEui/DevEui as
+  int64; ChirpStack's `structs.EUI64` only unmarshals the Basics Station "id6" string
+  (IPv6-style, e.g. `"0011:2233:4455:66aa"`). Sending a number errors / panics the
+  bridge. See `basicstation.euiID6`.
+- **The updf `DR` is the data-rate index, not the SF.** EU868 SF7BW125 is DR 5 — the
+  connector sends `region.UplinkDR`, not `UplinkSF`.
+- **upinfo needs a monotonic `xtime`** so the LNS can schedule the downlink.
+- **DevNonce must persist across reconnects.** The connector keeps the device brain
+  per DevEUI (`lorawanConnector.devs`) so DevNonce stays monotonic; on reconnect a
+  joined device resumes instead of re-joining (a reset DevNonce is rejected as a
+  replay — `Invalid DevNonce`). The join accept arrives as a `dnmsg` whose hex `pdu`
+  is the PHYPayload.
 
-Pending: **Basics Station (`:3001`) live test** against ChirpStack (UDP fully done);
-**dynamic sensor values** (payloads are fixed hex today — varying temp/hum needs a
-hex-aware template); and the **backend↔frontend integration pass** (drive the whole
-LoRaWAN flow from the Vue/Electron UI instead of curl/REST).
+## 9. What's done vs pending
+
+Done (verified live against ChirpStack): MQTT inbound; LoRaWAN OTAA **1.0.x AND 1.1**
+join + data uplinks over **both Semtech UDP and Basics Station**; gateway-online
+stats; full crypto parity; the fire-event REST endpoint; a real Dragino LHT65N payload
+decoded by a vendor codec over both transports; the frontend pieces (subscriptions
+step, real fire dialog, derived gateway status).
+
+Pending: **dynamic sensor values** (payloads are fixed hex today — varying temp/hum
+needs a hex-aware template); the **backend↔frontend integration pass** (drive the whole
+LoRaWAN flow from the Vue/Electron UI instead of curl/REST); and a small Basics Station
+**startup-churn** refinement (the device may re-join a couple of times before settling;
+it converges and streams data, but the handshake could be tightened).

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -245,20 +247,29 @@ func (t *udpTransport) close() { _ = t.conn.Close() }
 // wsTransport speaks the Basics Station LNS protocol over a WebSocket.
 type wsTransport struct {
 	conn  *websocket.Conn
+	xtime int64
 	mu    sync.Mutex
 	up    bool
 }
 
-// dialWS opens the WebSocket, sends the version handshake, and starts the receive
-// loop that routes downlinks.
-func dialWS(ctx context.Context, lnsURI, station string, route func([]byte)) (linkTransport, error) {
-	conn, _, err := websocket.DefaultDialer.DialContext(ctx, lnsURI, nil)
+// dialWS opens the Basics Station data WebSocket, sends the version handshake, and
+// starts the receive loop. When the LNS URI carries no path it defaults to the
+// per-gateway data endpoint /gw/<eui> (ChirpStack's convention); a full path is
+// used as-is so other LNSs can be targeted.
+func dialWS(ctx context.Context, lnsURI, gatewayEUI string, route func([]byte)) (linkTransport, error) {
+	u, err := url.Parse(lnsURI)
+	if err != nil {
+		return nil, err
+	}
+	if u.Path == "" || u.Path == "/" {
+		u.Path = "/gw/" + strings.ToLower(gatewayEUI)
+	}
+	conn, _, err := websocket.DefaultDialer.DialContext(ctx, u.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 	t := &wsTransport{conn: conn, up: true}
-	version, err := basicstation.VersionMessage(station)
-	if err == nil {
+	if version, err := basicstation.VersionMessage(gatewayEUI); err == nil {
 		_ = conn.WriteMessage(websocket.TextMessage, version)
 	}
 	go t.receive(route)
@@ -281,14 +292,16 @@ func (t *wsTransport) receive(route func([]byte)) {
 	}
 }
 
-// sendUp frames and writes one uplink message.
+// sendUp frames and writes one uplink message. The monotonic xtime gives the LNS a
+// reference to schedule the matching downlink (e.g. the join accept) against.
 func (t *wsTransport) sendUp(phy []byte, dr int, freq uint64, _ string, rssi int, snr float64) error {
-	frame, err := basicstation.MarshalUplink(phy, dr, freq, basicstation.UpInfo{RSSI: rssi, SNR: snr})
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.xtime += 1_000_000
+	frame, err := basicstation.MarshalUplink(phy, dr, freq, basicstation.UpInfo{RSSI: rssi, SNR: snr, XTime: t.xtime})
 	if err != nil {
 		return err
 	}
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	return t.conn.WriteMessage(websocket.TextMessage, frame)
 }
 
