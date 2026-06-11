@@ -15,12 +15,13 @@ import (
 	consolePorts "simulator/service/src/modules/console/application/ports"
 	devicesDtos "simulator/service/src/modules/devices/application/dtos"
 	devicesPorts "simulator/service/src/modules/devices/application/ports"
-	gatewaysDtos "simulator/service/src/modules/gateways/application/dtos"
 	"simulator/service/src/modules/engine/application/di"
 	dispatch "simulator/service/src/modules/engine/infrastructure/dispatch"
 	session "simulator/service/src/modules/engine/infrastructure/session"
+	gatewaysDtos "simulator/service/src/modules/gateways/application/dtos"
 	logsDtos "simulator/service/src/modules/logs/application/dtos"
 	logsPorts "simulator/service/src/modules/logs/application/ports"
+	"simulator/service/src/shared/reconcile"
 )
 
 // --- inline port fakes ---
@@ -114,6 +115,7 @@ func TestEngine_FiresRendersDispatchesReports(t *testing.T) {
 		Console:    pub,
 		Registry:   dispatch.NewRegistry(),
 		Connectors: session.NewConnectorRegistry(),
+		Reconcile:  reconcile.New(),
 	})
 
 	eng.OnMount()
@@ -155,6 +157,7 @@ func TestEngine_DisabledDeviceDoesNotFire(t *testing.T) {
 		Console:    &fakePublisher{},
 		Registry:   dispatch.NewRegistry(),
 		Connectors: session.NewConnectorRegistry(),
+		Reconcile:  reconcile.New(),
 	})
 	eng.OnMount()
 	time.Sleep(1200 * time.Millisecond)

@@ -14,6 +14,7 @@ import (
 	"simulator/service/src/modules/devices/application/dtos"
 	"simulator/service/src/modules/devices/domain/entities"
 	"simulator/service/src/modules/devices/domain/repositories"
+	"simulator/service/src/shared/reconcile"
 )
 
 // mockRepo is an inline fake of the DeviceRepository port.
@@ -51,7 +52,7 @@ func TestDevicesService_Create(t *testing.T) {
 		d.Created = now
 		return d, nil
 	}}
-	svc := New(di.DevicesServiceDI{Repo: repo})
+	svc := New(di.DevicesServiceDI{Repo: repo, Signal: reconcile.New()})
 
 	in := &dtos.DeviceInput{
 		Name: "n", DeviceID: "d-ext", ProtocolID: "http", Enabled: true,
@@ -75,7 +76,7 @@ func TestDevicesService_List(t *testing.T) {
 	repo := &mockRepo{listFn: func(context.Context) ([]entities.Device, error) {
 		return []entities.Device{{ID: "1", Name: "a"}, {ID: "2", Name: "b"}}, nil
 	}}
-	svc := New(di.DevicesServiceDI{Repo: repo})
+	svc := New(di.DevicesServiceDI{Repo: repo, Signal: reconcile.New()})
 
 	out, err := svc.List(context.Background())
 	if err != nil {
@@ -90,7 +91,7 @@ func TestDevicesService_DeleteMapsNotFoundToCustomError(t *testing.T) {
 	repo := &mockRepo{deleteFn: func(context.Context, string) error {
 		return repositories.ErrNotFound
 	}}
-	svc := New(di.DevicesServiceDI{Repo: repo})
+	svc := New(di.DevicesServiceDI{Repo: repo, Signal: reconcile.New()})
 
 	// The repository sentinel is translated into the HTTP-aware application error
 	// so the global error handler can render a 404 envelope.

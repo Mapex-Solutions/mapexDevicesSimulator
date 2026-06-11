@@ -8,11 +8,13 @@ import (
 	enginePorts "simulator/service/src/modules/engine/application/ports"
 	gatewaysPorts "simulator/service/src/modules/gateways/application/ports"
 	logsPorts "simulator/service/src/modules/logs/application/ports"
+	"simulator/service/src/shared/reconcile"
 )
 
 // EngineServiceDI declares the engine dependencies as port interfaces: it reads
 // devices and gateways, writes logs, streams to the console, dispatches one-shot
-// sends over a registry, and opens live sessions over a connector registry.
+// sends over a registry, opens live sessions over a connector registry, and binds
+// its Reconcile to the shared CRUD-change signal.
 type EngineServiceDI struct {
 	dig.In
 
@@ -22,4 +24,5 @@ type EngineServiceDI struct {
 	Console    consolePorts.Publisher
 	Registry   enginePorts.Registry
 	Connectors enginePorts.ConnectorRegistry
+	Reconcile  reconcile.Listener
 }

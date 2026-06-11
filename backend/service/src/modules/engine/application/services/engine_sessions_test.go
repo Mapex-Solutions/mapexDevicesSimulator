@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	devicesDtos "simulator/service/src/modules/devices/application/dtos"
-	gatewaysDtos "simulator/service/src/modules/gateways/application/dtos"
 	"simulator/service/src/modules/engine/application/di"
 	dispatch "simulator/service/src/modules/engine/infrastructure/dispatch"
 	session "simulator/service/src/modules/engine/infrastructure/session"
+	gatewaysDtos "simulator/service/src/modules/gateways/application/dtos"
+	"simulator/service/src/shared/reconcile"
 )
 
 // mqttDevice builds an MQTT device with the given receive config.
@@ -41,6 +42,7 @@ func newEngine(list []devicesDtos.Device, gateways ...gatewaysDtos.Gateway) *Eng
 		Console:    &fakePublisher{},
 		Registry:   dispatch.NewRegistry(),
 		Connectors: session.NewConnectorRegistry(),
+		Reconcile:  reconcile.New(),
 	}).(*EngineService)
 }
 
@@ -121,12 +123,58 @@ func TestBuildDesiredSessions_LoRaWANSkipsWhenGatewayMissing(t *testing.T) {
 
 func TestBuildDesiredSessions_DisabledAndHTTPExcluded(t *testing.T) {
 	eng := newEngine([]devicesDtos.Device{
-		mqttDevice("a", false, true, `[]`),                                 // disabled
+		mqttDevice("a", false, true, `[]`), // disabled
 		{ID: "b", Enabled: true, ProtocolID: "http", Config: json.RawMessage(`{"url":"http://x"}`), Events: json.RawMessage(`[]`)}, // http: no connector
 	})
 
 	desired := eng.buildDesiredSessions()
 	if len(desired) != 0 {
 		t.Fatalf("disabled + http devices must not open sessions, got %d", len(desired))
+	}
+}
+
+// bsDevice builds an enabled Basics Station device announcing the given gateway EUI.
+func bsDevice(id, gatewayEUI string) devicesDtos.Device {
+	cfg := `{"gatewayEui":"` + gatewayEUI + `","lnsUri":"ws://127.0.0.1:3001","region":"EU868",` +
+		`"macVersion":"1.0.3","activation":"otaa","devEui":"0011223344556677",` +
+		`"joinEui":"0000000000000000","appKey":"00112233445566778899AABBCCDDEEFF"}`
+	return devicesDtos.Device{
+		ID: id, Enabled: true, Name: "BS " + id, DeviceID: "dev-" + id,
+		ProtocolID: "basicstation", Config: json.RawMessage(cfg), Events: json.RawMessage(`[]`),
+	}
+}
+
+// bsGateway builds a Basics Station gateway entity with the given EUI / enabled state.
+func bsGateway(eui string, enabled bool) gatewaysDtos.Gateway {
+	return gatewaysDtos.Gateway{
+		ID: "gw-" + eui, EUI: eui, Enabled: enabled, Region: "EU868",
+		Link: json.RawMessage(`{"protocol":"basicstation","lnsUri":"ws://127.0.0.1:3001"}`),
+	}
+}
+
+// A Basics Station device carries its own link, but if a gateway entity shares its
+// EUI, the gateway's enabled flag gates the session — so disabling the gateway takes
+// the device offline, the same as the UDP path.
+func TestBuildDesiredSessions_BasicsStationRespectsGatewayFlag(t *testing.T) {
+	const eui = "00AABBCCDDEEFF11" // device announces this (upper case)
+	tests := []struct {
+		name      string
+		gateways  []gatewaysDtos.Gateway
+		wantBuilt bool
+	}{
+		// lower-case gateway EUI proves the match is case-insensitive.
+		{"matching gateway disabled drops the session", []gatewaysDtos.Gateway{bsGateway("00aabbccddeeff11", false)}, false},
+		{"matching gateway enabled keeps the session", []gatewaysDtos.Gateway{bsGateway("00aabbccddeeff11", true)}, true},
+		{"no matching gateway runs standalone", nil, true},
+		{"a different disabled gateway is ignored", []gatewaysDtos.Gateway{bsGateway("1122334455667788", false)}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			eng := newEngine([]devicesDtos.Device{bsDevice("bs", eui)}, tt.gateways...)
+			_, ok := eng.buildDesiredSessions()["bs"]
+			if ok != tt.wantBuilt {
+				t.Fatalf("session built = %v, want %v", ok, tt.wantBuilt)
+			}
+		})
 	}
 }

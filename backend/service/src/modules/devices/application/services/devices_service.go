@@ -57,6 +57,7 @@ func (s *DevicesService) Create(ctx context.Context, in *dtos.DeviceInput) (*dto
 	if err != nil {
 		return nil, err
 	}
+	s.deps.Signal.Notify()
 	return mapper.EntityToDto[entities.Device, dtos.Device](created)
 }
 
@@ -73,6 +74,7 @@ func (s *DevicesService) Update(ctx context.Context, id string, in *dtos.DeviceI
 		}
 		return nil, err
 	}
+	s.deps.Signal.Notify()
 	return mapper.EntityToDto[entities.Device, dtos.Device](updated)
 }
 
@@ -84,5 +86,6 @@ func (s *DevicesService) Delete(ctx context.Context, id string) (map[string]bool
 		}
 		return nil, err
 	}
+	s.deps.Signal.Notify()
 	return map[string]bool{"success": true}, nil
 }

@@ -155,6 +155,14 @@ func (s *EngineService) buildBasicsStationSessionSpec(spec enginePorts.SessionSp
 	if err := json.Unmarshal(config, &cfg); err != nil {
 		return enginePorts.SessionSpec{}, false
 	}
+	// A Basics Station device carries its own link, so it has no gatewayId. Still,
+	// if a gateway entity with the same EUI exists and is disabled, honor that flag
+	// and drop the session — disabling a gateway must take its devices offline, the
+	// same way the UDP path already does. Devices whose EUI has no gateway entity
+	// keep working standalone.
+	if gw, ok := s.findGatewayByEUI(cfg.GatewayEUI); ok && !gw.Enabled {
+		return enginePorts.SessionSpec{}, false
+	}
 	spec.LoRaWAN = &enginePorts.LoRaWANSpec{
 		Region:       cfg.Region,
 		MACVersion:   cfg.MACVersion,
@@ -181,6 +189,22 @@ func (s *EngineService) findGateway(id string) (gatewayscontract.Gateway, bool) 
 	}
 	for _, gw := range gws {
 		if gw.ID == id {
+			return gw, true
+		}
+	}
+	return gatewayscontract.Gateway{}, false
+}
+
+// findGatewayByEUI resolves a gateway by its EUI (case-insensitive). Basics Station
+// devices reference no gateway id, so this is how their session is matched to a
+// gateway entity to honor its enabled flag.
+func (s *EngineService) findGatewayByEUI(eui string) (gatewayscontract.Gateway, bool) {
+	gws, err := s.deps.Gateways.List(context.Background())
+	if err != nil {
+		return gatewayscontract.Gateway{}, false
+	}
+	for _, gw := range gws {
+		if strings.EqualFold(gw.EUI, eui) {
 			return gw, true
 		}
 	}

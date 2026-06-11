@@ -13,6 +13,7 @@ import (
 	enginePorts "simulator/service/src/modules/engine/application/ports"
 	dispatch "simulator/service/src/modules/engine/infrastructure/dispatch"
 	session "simulator/service/src/modules/engine/infrastructure/session"
+	"simulator/service/src/shared/reconcile"
 )
 
 // fireHTTPDevice builds an HTTP device with a pre-registered event and NO schedule,
@@ -48,6 +49,7 @@ func TestEngine_FireByEventID(t *testing.T) {
 		Console:    pub,
 		Registry:   dispatch.NewRegistry(),
 		Connectors: session.NewConnectorRegistry(),
+		Reconcile:  reconcile.New(),
 	})
 	eng.OnMount()
 	defer eng.OnShutdown(context.Background())
@@ -73,6 +75,7 @@ func TestEngine_FireUnknownDeviceAndEvent(t *testing.T) {
 		Console:    &fakePublisher{},
 		Registry:   dispatch.NewRegistry(),
 		Connectors: session.NewConnectorRegistry(),
+		Reconcile:  reconcile.New(),
 	})
 	eng.OnMount()
 	defer eng.OnShutdown(context.Background())

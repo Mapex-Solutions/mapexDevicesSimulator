@@ -25,11 +25,14 @@ func New(deps di.EngineServiceDI) ports.EnginePort {
 }
 
 // OnMount reads the devices, builds the initial job set, and starts the worker
-// pool, the scheduler, and the slow safety resync. Fired during module init.
+// pool, the scheduler, and the slow safety resync. It also binds Reconcile to the
+// shared CRUD-change signal so device/gateway writes re-align the engine at once.
+// Fired during module init.
 func (s *EngineService) OnMount() {
 	if !s.markStarted() {
 		return
 	}
+	s.deps.Reconcile.Subscribe(s.Reconcile)
 	s.reconcile()
 	s.reconcileSessions()
 	s.startWorkers()

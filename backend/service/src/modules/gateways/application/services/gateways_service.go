@@ -57,6 +57,7 @@ func (s *GatewaysService) Create(ctx context.Context, in *dtos.GatewayInput) (*d
 	if err != nil {
 		return nil, err
 	}
+	s.deps.Signal.Notify()
 	return mapper.EntityToDto[entities.Gateway, dtos.Gateway](created)
 }
 
@@ -73,6 +74,7 @@ func (s *GatewaysService) Update(ctx context.Context, id string, in *dtos.Gatewa
 		}
 		return nil, err
 	}
+	s.deps.Signal.Notify()
 	return mapper.EntityToDto[entities.Gateway, dtos.Gateway](updated)
 }
 
@@ -84,5 +86,6 @@ func (s *GatewaysService) Delete(ctx context.Context, id string) (map[string]boo
 		}
 		return nil, err
 	}
+	s.deps.Signal.Notify()
 	return map[string]bool{"success": true}, nil
 }
