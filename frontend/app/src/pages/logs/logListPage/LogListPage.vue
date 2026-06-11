@@ -434,6 +434,15 @@ onMounted(() => {
 	}
 }
 
+// The summary column carries no fixed width. With the table's default auto layout
+// it grows to fit its (nowrap) content and forces a horizontal scrollbar, cutting
+// off the trailing columns. A fixed layout makes the summary take the remaining
+// space and truncate with the shared cell ellipsis instead of widening the row.
+:deep(.data-row-table .q-table) {
+	table-layout: fixed;
+	width: 100%;
+}
+
 // The avatar is an inline-flex box; without this the cell's text-overflow
 // rule renders an ellipsis ("...") under the icon when it overflows.
 :deep(.data-row-cell--avatar) {
