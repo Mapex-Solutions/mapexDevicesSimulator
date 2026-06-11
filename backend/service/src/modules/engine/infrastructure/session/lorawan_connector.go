@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"simulator/packages/utils/lorawan/band"
@@ -20,27 +19,6 @@ var (
 	_ ports.Connector = (*lorawanConnector)(nil)
 	_ ports.Session   = (*lorawanSession)(nil)
 )
-
-// joinTimeout bounds how long Open waits for the OTAA join accept before failing,
-// so the session manager retries with backoff rather than blocking forever.
-const joinTimeout = 6 * time.Second
-
-// lorawanConnector opens LoRaWAN device sessions, sharing one gateway link across
-// every device that transmits through the same gateway.
-type lorawanConnector struct {
-	mu    sync.Mutex
-	links map[string]*sharedLink
-	devs  map[string]*device.Session // keyed by DevEUI; persists DevNonce across reconnects
-}
-
-// lorawanSession is one device's live LoRaWAN session over a shared gateway link.
-type lorawanSession struct {
-	dev    *device.Session
-	link   *sharedLink
-	conn   *lorawanConnector
-	region band.Region
-	addr   [4]byte
-}
 
 // NewLoRaWAN builds the LoRaWAN connector (serves both the lorawan and basicstation
 // protocol ids; the difference is only where the link config comes from).

@@ -48,6 +48,28 @@ func (s *EngineService) Reconcile() {
 	s.reconcileSessions()
 }
 
+// Fire sends one event on demand for a device (the console/REST "fire" action): it
+// resolves the event (a pre-registered one by id, or an inline ad-hoc event), builds
+// the send spec, and runs it through the same process() path as a scheduled fire, so
+// the uplink goes through the live session when one exists and the result streams to
+// the console (and logs, when storeLogs).
+func (s *EngineService) Fire(ctx context.Context, deviceID string, in ports.FireInput) error {
+	dev, err := s.findDevice(ctx, deviceID)
+	if err != nil {
+		return err
+	}
+	event, err := resolveFireEvent(*dev, in)
+	if err != nil {
+		return err
+	}
+	spec, ok := buildSendSpec(*dev, event)
+	if !ok {
+		return ports.ErrFireUnsupported
+	}
+	s.process(fireTask{spec: spec, counter: s.fireSeq.Add(1)})
+	return nil
+}
+
 // OnShutdown cancels the scheduler + workers and waits for them to drain.
 func (s *EngineService) OnShutdown(_ context.Context) error {
 	cancel := s.stopStarted()

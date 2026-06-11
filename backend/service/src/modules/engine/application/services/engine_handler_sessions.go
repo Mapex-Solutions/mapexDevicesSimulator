@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,35 +17,6 @@ import (
 	"simulator/service/src/modules/engine/domain/entities"
 	logsDtos "simulator/service/src/modules/logs/application/dtos"
 )
-
-// sessionHandle is the engine's grip on one device's live-connection supervisor:
-// the cancel func that stops it, the signature that detects config changes, and
-// the current live session (nil while connecting/reconnecting).
-type sessionHandle struct {
-	sig    string
-	cancel context.CancelFunc
-
-	mu   sync.RWMutex
-	live enginePorts.Session
-}
-
-func (h *sessionHandle) set(s enginePorts.Session) {
-	h.mu.Lock()
-	h.live = s
-	h.mu.Unlock()
-}
-
-func (h *sessionHandle) get() enginePorts.Session {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
-	return h.live
-}
-
-// desiredSession is one device that should have a live connection.
-type desiredSession struct {
-	spec enginePorts.SessionSpec
-	sig  string
-}
 
 // reconcileSessions aligns the running supervisors with the desired set: stop the
 // ones whose device disappeared or was disabled, (re)start the new or changed ones.

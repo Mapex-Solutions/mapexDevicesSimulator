@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"simulator/service/src/modules/engine/application/di"
+	enginePorts "simulator/service/src/modules/engine/application/ports"
 )
 
 // EngineService runs the simulation: it keeps a min-heap of jobs (one per
@@ -31,6 +32,37 @@ type EngineService struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
+}
+
+// sessionHandle is the engine's grip on one device's live-connection supervisor:
+// the cancel func that stops it, the signature that detects config changes, and
+// the current live session (nil while connecting/reconnecting).
+type sessionHandle struct {
+	sig    string
+	cancel context.CancelFunc
+
+	mu   sync.RWMutex
+	live enginePorts.Session
+}
+
+// set stores the current live session under the handle's lock.
+func (h *sessionHandle) set(s enginePorts.Session) {
+	h.mu.Lock()
+	h.live = s
+	h.mu.Unlock()
+}
+
+// get returns the current live session, or nil while (re)connecting.
+func (h *sessionHandle) get() enginePorts.Session {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.live
+}
+
+// desiredSession is one device that should have a live connection.
+type desiredSession struct {
+	spec enginePorts.SessionSpec
+	sig  string
 }
 
 // sendSpec is the resolved "what to send" for one job: the protocol target plus

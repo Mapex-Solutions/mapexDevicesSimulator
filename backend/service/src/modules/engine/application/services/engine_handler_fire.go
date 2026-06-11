@@ -10,31 +10,6 @@ import (
 	domainsvc "simulator/service/src/modules/engine/domain/services"
 )
 
-// Fire sends one event on demand for a device (the console/REST "fire" action). It
-// resolves the event (a pre-registered one by id, or an inline ad-hoc event),
-// builds the send spec, and runs it through the same process() path as a scheduled
-// fire — so the uplink goes through the live session when one exists, and the
-// result streams to the console (and logs, when storeLogs).
-func (s *EngineService) Fire(ctx context.Context, deviceID string, in enginePorts.FireInput) error {
-	dev, err := s.findDevice(ctx, deviceID)
-	if err != nil {
-		return err
-	}
-
-	event, err := resolveFireEvent(*dev, in)
-	if err != nil {
-		return err
-	}
-
-	spec, ok := buildSendSpec(*dev, event)
-	if !ok {
-		return enginePorts.ErrFireUnsupported
-	}
-
-	s.process(fireTask{spec: spec, counter: s.fireSeq.Add(1)})
-	return nil
-}
-
 // findDevice loads a device by its server id.
 func (s *EngineService) findDevice(ctx context.Context, deviceID string) (*devicescontract.Device, error) {
 	devices, err := s.deps.Devices.List(ctx)

@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -14,32 +13,6 @@ import (
 	"simulator/packages/utils/lorawan/basicstation"
 	"simulator/packages/utils/lorawan/udp"
 )
-
-// linkTransport is one live connection to the LNS (Basics Station WS or Semtech
-// UDP). It forwards uplinks and pumps received downlink PHYPayloads to onDownlink.
-type linkTransport interface {
-	sendUp(phy []byte, dr int, freq uint64, datr string, rssi int, snr float64) error
-	connected() bool
-	close()
-}
-
-// sharedLink is a gateway-level link shared by every LoRaWAN device on that gateway.
-// Devices register a downlink handler; received frames are routed by the connector's
-// router. A reference count tears the link down when the last device disconnects.
-type sharedLink struct {
-	key        string
-	transport  linkTransport
-	router     *downlinkRouter
-	refs       int
-}
-
-// downlinkRouter dispatches a received downlink to the right device: a join accept
-// goes to the device currently awaiting one; a data downlink goes by DevAddr.
-type downlinkRouter struct {
-	mu      sync.RWMutex
-	byAddr  map[[4]byte]func([]byte)
-	pending func([]byte)
-}
 
 // newDownlinkRouter builds an empty router.
 func newDownlinkRouter() *downlinkRouter {
@@ -88,21 +61,6 @@ func (r *downlinkRouter) unbind(addr [4]byte) {
 	delete(r.byAddr, addr)
 	r.mu.Unlock()
 }
-
-// udpTransport speaks the Semtech UDP packet-forwarder protocol.
-type udpTransport struct {
-	conn  *net.UDPConn
-	gwEUI [8]byte
-	token uint16
-	tmst  uint32
-	rxnb  uint32
-	mu    sync.Mutex
-	up    bool
-}
-
-// statInterval is how often the gateway reports statistics so the LNS keeps it
-// marked online (a real packet forwarder sends a stat roughly every 30s).
-const statInterval = 30 * time.Second
 
 // dialUDP opens the UDP socket and starts the keepalive, stats, and receive loops.
 func dialUDP(ctx context.Context, host string, port int, gwEUI [8]byte, route func([]byte)) (linkTransport, error) {
@@ -243,14 +201,6 @@ func (t *udpTransport) connected() bool {
 
 // close tears the socket down.
 func (t *udpTransport) close() { _ = t.conn.Close() }
-
-// wsTransport speaks the Basics Station LNS protocol over a WebSocket.
-type wsTransport struct {
-	conn  *websocket.Conn
-	xtime int64
-	mu    sync.Mutex
-	up    bool
-}
 
 // dialWS opens the Basics Station data WebSocket, sends the version handshake, and
 // starts the receive loop. When the LNS URI carries no path it defaults to the
