@@ -95,7 +95,7 @@
 				</q-list>
 
 				<div class="console__devices-foot">
-					<q-btn flat dense no-caps icon="mdi-plus" :label="t('dashboard.newDevice')" :to="{ name: 'devices' }" />
+					<q-btn flat dense no-caps icon="mdi-plus" :label="t('dashboard.newDevice')" :to="{ name: 'device-new' }" />
 				</div>
 			</aside>
 
