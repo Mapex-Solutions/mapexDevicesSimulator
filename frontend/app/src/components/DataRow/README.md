@@ -1,5 +1,7 @@
 # DataRow Component
 
+> 🇧🇷 Versão em português: [README_pt.md](./README_pt.md)
+
 Generic row component for displaying data in list views with responsive layouts.
 
 ## Features

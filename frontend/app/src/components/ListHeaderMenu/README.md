@@ -1,5 +1,7 @@
 # ListHeaderMenu Component
 
+> 🇧🇷 Versão em português: [README_pt.md](./README_pt.md)
+
 Generic menu button for list pages providing items count display, items per page selection, and column visibility toggles.
 
 ## Features

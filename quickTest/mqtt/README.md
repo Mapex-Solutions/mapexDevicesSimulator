@@ -1,5 +1,7 @@
 # MQTT quick test
 
+> 🇧🇷 Versão em português: [README_pt.md](./README_pt.md)
+
 An MQTT device keeps a **live connection** to a broker: it publishes uplinks and,
 when **Receive** is on, stays subscribed to topics and streams every received
 message to the console as a `down` frame.

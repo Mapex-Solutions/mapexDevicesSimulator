@@ -1,5 +1,7 @@
 # Quick Test — drive the simulator end to end
 
+> 🇧🇷 Versão em português: [README_pt.md](./README_pt.md)
+
 This folder is a hands-on tour of the **Mapex Devices Simulator**. Each protocol
 has its own folder with **copy-paste values** and a step-by-step walk-through so
 you can create a device, turn it on, fire an event, and watch the traffic live.

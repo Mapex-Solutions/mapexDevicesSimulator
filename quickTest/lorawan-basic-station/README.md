@@ -1,5 +1,7 @@
 # LoRaWAN quick test — Basics Station
 
+> 🇧🇷 Versão em português: [README_pt.md](./README_pt.md)
+
 Same LoRaWAN sensor and same OTAA join as the UDP test, but the device carries its
 **own Basics Station WebSocket link** to the LNS — no separate gateway entity. The
 simulator connects to `ws://host:3001/gw/<gateway-eui>` (ChirpStack's Basics Station

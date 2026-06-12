@@ -1,5 +1,7 @@
 # LoRaWAN quick test — Semtech UDP
 
+> 🇧🇷 Versão em português: [README_pt.md](./README_pt.md)
+
 A LoRaWAN sensor rides on a **gateway** that carries the link to your LNS. Here the
 gateway speaks the classic **Semtech UDP packet-forwarder** to ChirpStack's
 gateway-bridge on `:1700`. The sensor does an OTAA join, then sends a real

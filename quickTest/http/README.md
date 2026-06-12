@@ -1,5 +1,7 @@
 # HTTP quick test
 
+> 🇧🇷 Versão em português: [README_pt.md](./README_pt.md)
+
 An HTTP device is **send-only**: every fire is a one-shot request to your endpoint,
 and the response status comes back on the `up` frame. No downlinks.
 

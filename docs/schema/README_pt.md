@@ -1,23 +1,24 @@
-# Simulator schemas — full REST + WebSocket contract
+# Schemas do simulador — contrato REST + WebSocket completo
 
-> 🇧🇷 Versão em português: [README_pt.md](./README_pt.md)
+> 🇺🇸 English version: [README.md](./README.md)
 
-Source-of-truth payload shapes the Go backend must accept/return, taken verbatim
-from the frontend's typed client (`frontend/src/services/sim/interfaces`). Use
-these to derive the Go DTOs (and any Zod/validation layer). Types are shown in
-TypeScript notation; JSON examples follow each.
+Formatos de payload que são fonte da verdade e que o backend Go deve aceitar/retornar,
+tirados literalmente do cliente tipado do frontend
+(`frontend/src/services/sim/interfaces`). Use-os para derivar os DTOs Go (e qualquer
+camada Zod/validação). Os tipos são mostrados em notação TypeScript; exemplos JSON seguem
+cada um.
 
-## Response envelope (Mapex standard)
+## Envelope de resposta (padrão Mapex)
 
-Every response is wrapped in the standard Mapex envelope. The type listed in the
-"Returns (in `data`)" column is what lands in `data`; on error, `errors` carries
-the messages and `data` is null. Request bodies are the raw `*Input` (not wrapped).
+Toda resposta é envolvida no envelope Mapex padrão. O tipo listado na coluna "Returns
+(in `data`)" é o que vem em `data`; no erro, `errors` carrega as mensagens e `data` é
+null. Corpos de requisição são o `*Input` cru (não envolvidos).
 
 ```json
 { "status": 200, "errors": null, "data": <payload> }
 ```
 
-REST endpoints these cover:
+Endpoints REST cobertos:
 
 | Method | Path                 | Body          | Returns (in `data`) |
 |--------|----------------------|---------------|---------------------|
@@ -34,23 +35,23 @@ REST endpoints these cover:
 | PUT    | `/api/gateways/:id`  | `GatewayInput`| `Gateway`           |
 | DELETE | `/api/gateways/:id`  | —             | `null`              |
 
-Conventions:
+Convenções:
 
-- All field names are camelCase on the wire (JSON).
-- Every response is the envelope `{ status, errors, data }`; DELETE returns it too
-  (`200` with `data: null`), not a bare `204`.
-- `id` and `created` are **server-assigned** (not part of the `*Input` create
-  bodies). `created` is the creation timestamp on EVERY persisted entity, an
-  ISO-8601 string. There is no `ts` / `createdAt` / `timestamp` variant.
-- `config` (device) is a **discriminated union** on `kind`
-  (`http` | `mqtt` | `lorawan` | `basicstation`). The `kind` always matches the
-  device's `protocolId`.
-- Secrets (`apiKey`, `password`, TLS PEM blocks, LoRaWAN keys) arrive in these
-  payloads but must **never be logged** by the engine.
+- Todos os nomes de campo são camelCase no fio (JSON).
+- Toda resposta é o envelope `{ status, errors, data }`; o DELETE também o retorna
+  (`200` com `data: null`), não um `204` puro.
+- `id` e `created` são **atribuídos pelo servidor** (não fazem parte dos corpos de
+  criação `*Input`). `created` é o timestamp de criação em TODA entidade persistida, uma
+  string ISO-8601. Não existe variação `ts` / `createdAt` / `timestamp`.
+- `config` (device) é uma **união discriminada** por `kind`
+  (`http` | `mqtt` | `lorawan` | `basicstation`). O `kind` sempre bate com o
+  `protocolId` do dispositivo.
+- Segredos (`apiKey`, `password`, blocos PEM TLS, chaves LoRaWAN) chegam nestes payloads
+  mas **nunca devem ser logados** pela engine.
 
 ---
 
-## Shared primitives
+## Primitivos compartilhados
 
 ```ts
 type ProtocolId = 'http' | 'mqtt' | 'lorawan' | 'basicstation';
@@ -65,8 +66,8 @@ interface KeyValue {
 
 ## 1) Log
 
-`GET /api/logs` → `LogPage`. A Log is one persisted device message (the
-SQLite-backed history behind the live console stream).
+`GET /api/logs` → `LogPage`. Um Log é uma mensagem de dispositivo persistida (o
+histórico em SQLite por trás do stream de console ao vivo).
 
 ```ts
 type LogDirection = 'up' | 'down' | 'system';
@@ -103,8 +104,8 @@ interface LogPage {
 }
 ```
 
-**Example** `GET /api/logs?limit=20&offset=0&protocol=mqtt` (response is the
-envelope; `LogPage` is the `data`):
+**Exemplo** `GET /api/logs?limit=20&offset=0&protocol=mqtt` (a resposta é o envelope;
+`LogPage` é o `data`):
 
 ```json
 {
@@ -132,10 +133,9 @@ envelope; `LogPage` is the `data`):
 
 ---
 
-## 2) Create Device
+## 2) Criar Device
 
-`POST /api/devices` with `DeviceInput` → returns `Device` (`Input` + `id` +
-`created`).
+`POST /api/devices` com `DeviceInput` → retorna `Device` (`Input` + `id` + `created`).
 
 ```ts
 interface DeviceInput {
@@ -155,7 +155,7 @@ interface Device extends DeviceInput {
 }
 ```
 
-### config — `ProtocolConfig` (discriminated union on `kind`)
+### config — `ProtocolConfig` (união discriminada por `kind`)
 
 ```ts
 type ProtocolConfig =
@@ -237,9 +237,9 @@ interface BasicsStationConnectionConfig {
 
 ### events — `DeviceEvent[]`
 
-An event holds exactly one protocol-specific config matching the device's
-protocol (`http`/`mqtt` use the shared body; `lorawan`/`basicstation` use the
-LoRaWAN uplink). `schedule` is optional auto-fire.
+Um evento guarda exatamente uma config específica de protocolo que bate com o protocolo
+do dispositivo (`http`/`mqtt` usam o corpo compartilhado; `lorawan`/`basicstation` usam
+o uplink LoRaWAN). `schedule` é o auto-disparo opcional.
 
 ```ts
 type HttpBodyMode = 'none' | 'raw' | 'form';
@@ -289,20 +289,20 @@ interface DeviceEvent {
 }
 ```
 
-### Placeholder tokens (resolved by the engine at send time)
+### Tokens de placeholder (resolvidos pela engine no envio)
 
-Used inside `body`, `bodyFields[].value`, MQTT `topic`, and LoRaWAN `payloadHex`:
+Usados dentro de `body`, `bodyFields[].value`, `topic` MQTT e `payloadHex` LoRaWAN:
 
 ```
-{{randInt(min,max)}}    integer in range, negatives allowed
-{{randFloat(min,max)}}  decimal in range, negatives allowed
-{{now}}                 current ISO-8601 timestamp
-{{counter}}             auto-incrementing counter
-{{deviceId}}            the device's deviceId field
-{{uuid}}                random UUID
+{{randInt(min,max)}}    inteiro no intervalo, negativos permitidos
+{{randFloat(min,max)}}  decimal no intervalo, negativos permitidos
+{{now}}                 timestamp ISO-8601 atual
+{{counter}}             contador auto-incremental
+{{deviceId}}            o campo deviceId do dispositivo
+{{uuid}}                UUID aleatório
 ```
 
-### Example — `POST /api/devices` (HTTP device)
+### Exemplo — `POST /api/devices` (device HTTP)
 
 ```json
 {
@@ -341,7 +341,7 @@ Used inside `body`, `bodyFields[].value`, MQTT `topic`, and LoRaWAN `payloadHex`
 }
 ```
 
-### Example — `POST /api/devices` (LoRaWAN device, OTAA)
+### Exemplo — `POST /api/devices` (device LoRaWAN, OTAA)
 
 ```json
 {
@@ -378,11 +378,11 @@ Used inside `body`, `bodyFields[].value`, MQTT `topic`, and LoRaWAN `payloadHex`
 
 ---
 
-## 3) Create Gateway
+## 3) Criar Gateway
 
-`POST /api/gateways` with `GatewayInput` → returns `Gateway` (`Input` + `id` +
-`created`). A gateway is the Basics Station / UDP link to the LNS that forwards
-frames from LoRaWAN devices.
+`POST /api/gateways` com `GatewayInput` → retorna `Gateway` (`Input` + `id` + `created`).
+Um gateway é o link Basics Station / UDP até o LNS que encaminha os frames dos
+dispositivos LoRaWAN.
 
 ```ts
 type GatewayLinkProtocol = 'basicstation' | 'udp';
@@ -411,7 +411,7 @@ interface Gateway extends GatewayInput {
 }
 ```
 
-### Example — `POST /api/gateways` (Basics Station)
+### Exemplo — `POST /api/gateways` (Basics Station)
 
 ```json
 {
@@ -429,7 +429,7 @@ interface Gateway extends GatewayInput {
 }
 ```
 
-### Example — `POST /api/gateways` (Semtech UDP)
+### Exemplo — `POST /api/gateways` (Semtech UDP)
 
 ```json
 {
@@ -451,9 +451,9 @@ interface Gateway extends GatewayInput {
 
 ## 4) Connection
 
-A reusable, named target plus its auth for one protocol. A `Run` points at a
-connection by id. `config` is the SAME `ProtocolConfig` discriminated union as a
-device's `config` (see section 2).
+Um alvo nomeado e reutilizável mais a sua auth para um protocolo. Um `Run` aponta para
+uma connection por id. `config` é a MESMA união discriminada `ProtocolConfig` da `config`
+de um device (veja a seção 2).
 
 | Method | Path                          | Body              | Returns (in `data`)   |
 |--------|-------------------------------|-------------------|-----------------------|
@@ -486,7 +486,7 @@ interface ConnectionTestResult {
 }
 ```
 
-**Example** — `POST /api/connections` (MQTT target):
+**Exemplo** — `POST /api/connections` (alvo MQTT):
 
 ```json
 {
@@ -511,8 +511,8 @@ interface ConnectionTestResult {
 
 ## 5) Scenario
 
-A traffic profile: a payload template plus rate and volume. `payloadTemplate`
-uses the same placeholder tokens listed in section 2.
+Um perfil de tráfego: um template de payload mais taxa e volume. `payloadTemplate` usa os
+mesmos tokens de placeholder listados na seção 2.
 
 | Method | Path                         | Body             | Returns (in `data`) |
 |--------|------------------------------|------------------|---------------------|
@@ -552,9 +552,9 @@ interface ScenarioPreview {
 
 ## 6) Run
 
-A simulation run: a connection target plus a set of devices plus a scenario,
-tracked through its lifecycle. Live progress streams over the WebSocket
-(section 8).
+Uma execução de simulação: um alvo de connection mais um conjunto de devices mais um
+scenario, acompanhada ao longo do seu ciclo de vida. O progresso ao vivo é transmitido
+pelo WebSocket (seção 8).
 
 | Method | Path                   | Body            | Returns (in `data`) |
 |--------|------------------------|-----------------|---------------------|
@@ -596,9 +596,9 @@ interface StartRunInput {
 
 ## 7) Health
 
-`GET /api/health` → `HealthResponse`. Liveness probe; the Electron launcher polls
-it before opening the window. Returned in the standard envelope (`data` carries
-the payload) like every other REST endpoint.
+`GET /api/health` → `HealthResponse`. Probe de liveness; o launcher Electron faz polling
+nele antes de abrir a janela. Retornado no envelope padrão (`data` carrega o payload)
+como todo outro endpoint REST.
 
 ```ts
 interface HealthResponse {
@@ -607,7 +607,7 @@ interface HealthResponse {
 }
 ```
 
-**Example** `GET /api/health`:
+**Exemplo** `GET /api/health`:
 
 ```json
 { "status": 200, "errors": null, "data": { "status": "ok", "version": "0.1.0" } }
@@ -615,13 +615,13 @@ interface HealthResponse {
 
 ---
 
-## 8) WebSocket — live run stream
+## 8) WebSocket — stream de run ao vivo
 
-`GET /ws` (WebSocket upgrade). The engine pushes `RunEvent` frames as a run
-progresses: log lines, metric snapshots, and lifecycle status changes share the
-one channel. Frames are **raw JSON** — the `{ status, errors, data }` envelope is
-for REST responses only. `ts` here is the frame's event time on the live stream,
-NOT a persisted entity's `created`.
+`GET /ws` (upgrade WebSocket). A engine empurra frames `RunEvent` conforme um run avança:
+linhas de log, snapshots de métrica e mudanças de status de ciclo de vida compartilham o
+mesmo canal. Os frames são **JSON cru** — o envelope `{ status, errors, data }` é só para
+respostas REST. `ts` aqui é o tempo do evento do frame no stream ao vivo, NÃO o `created`
+de uma entidade persistida.
 
 ```ts
 type RunEventKind = 'log' | 'metric' | 'status';
@@ -639,7 +639,7 @@ interface RunEvent {
 }
 ```
 
-**Example frames:**
+**Frames de exemplo:**
 
 ```json
 { "kind": "status", "ts": "2026-06-09T03:00:00.000Z", "runId": "run-1", "state": "running" }
