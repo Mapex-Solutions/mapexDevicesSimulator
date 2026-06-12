@@ -5,6 +5,7 @@ export default {
 	footer: {
 		prefix: 'Made with',
 		suffix: 'by',
+		discover: 'Discover MapexOS — a 100% open-source enterprise IoT platform',
 	},
 	splash: {
 		tagline: 'Simulate devices across HTTP, MQTT and LoRaWAN',

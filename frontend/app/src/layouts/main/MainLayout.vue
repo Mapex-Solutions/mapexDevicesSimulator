@@ -14,6 +14,7 @@ import { useTheme } from '@composables/theme';
 import { buildMenuList } from './constants';
 
 const githubUrl = 'https://github.com/Mapex-Solutions/mapexDevicesSimulator';
+const mapexOsUrl = 'https://mapexos.io';
 
 /** COMPOSABLES & STORES */
 const { t } = useTranslations();
@@ -58,13 +59,22 @@ function toggleDrawer(): void {
 
     <q-footer class="app-footer">
       <div class="app-footer__inner">
-        {{ t('footer.prefix') }}
-        <q-icon name="mdi-heart" class="app-footer__heart" />
-        {{ t('footer.suffix') }}
-        <a :href="githubUrl" target="_blank" rel="noopener noreferrer" class="app-footer__link">
-          <q-icon name="mdi-github" size="16px" />
-          Mapex Solutions · Thiago Anselmo
+        <a :href="mapexOsUrl" target="_blank" rel="noopener noreferrer" class="app-footer__cta">
+          <q-icon name="mdi-hexagon-multiple" size="15px" />
+          <span>{{ t('footer.discover') }}</span>
         </a>
+
+        <span class="app-footer__divider" aria-hidden="true">·</span>
+
+        <span class="app-footer__made">
+          {{ t('footer.prefix') }}
+          <q-icon name="mdi-heart" class="app-footer__heart" />
+          {{ t('footer.suffix') }}
+          <a :href="githubUrl" target="_blank" rel="noopener noreferrer" class="app-footer__link">
+            <q-icon name="mdi-github" size="14px" />
+            Mapex Solutions
+          </a>
+        </span>
       </div>
     </q-footer>
   </q-layout>
@@ -128,9 +138,33 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 6px 10px;
   height: 36px;
   font-size: var(--mapex-font-xs);
+}
+
+.app-footer__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mapex-spacing-xs);
+  color: var(--mapex-primary);
+  font-weight: var(--mapex-font-weight-semibold);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.app-footer__divider {
+  color: var(--mapex-text-muted);
+}
+
+.app-footer__made {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .app-footer__heart {
