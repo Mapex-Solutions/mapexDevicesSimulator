@@ -40,10 +40,14 @@ func InitFiber(c *dig.Container) *fiber.App {
 	return app
 }
 
-// ListenAddress resolves the bind address. A positive flagPort (passed by the
-// Electron sidecar launcher) wins over the configured http_port.
-func ListenAddress(flagPort int) string {
-	host, _ := config.GetStringValue("http_address")
+// ListenAddress resolves the bind address. The host and port passed by the
+// Electron sidecar launcher (--addr / --port) win over the configured
+// http_address / http_port; empty/non-positive values fall back to config.
+func ListenAddress(flagHost string, flagPort int) string {
+	host := flagHost
+	if host == "" {
+		host, _ = config.GetStringValue("http_address")
+	}
 	port := flagPort
 	if port <= 0 {
 		port, _ = config.GetIntValue("http_port")

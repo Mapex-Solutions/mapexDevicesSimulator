@@ -14,8 +14,10 @@ import (
 
 // main boots the simulator sidecar: configuration and logging, the SQLite store,
 // the HTTP app (health + business modules + SPA), then blocks until a signal and
-// shuts down gracefully. The Electron launcher passes the listen port via --port.
+// shuts down gracefully. The Electron launcher passes the bind host and listen
+// port via --addr and --port.
 func main() {
+	host := flag.String("addr", "", "host to bind on (empty = use http_address config)")
 	port := flag.Int("port", 0, "HTTP port to listen on (0 = use http_port config)")
 	flag.Parse()
 
@@ -39,7 +41,7 @@ func main() {
 	sm := shutdown.New()
 	bootstrap.InitShutdown(c, sm, app)
 
-	addr := bootstrap.ListenAddress(*port)
+	addr := bootstrap.ListenAddress(*host, *port)
 	go func() {
 		if err := app.Listen(addr); err != nil {
 			logger.Error(err, "[INFRA:HTTP] HTTP server stopped")
