@@ -73,19 +73,19 @@
 
 					<q-item
 						v-for="device in deviceList"
-						:key="device.id"
+						:key="device.deviceId"
 						clickable
-						:active="messagesStore.deviceFilter === device.id"
+						:active="messagesStore.deviceFilter === device.deviceId"
 						active-class="console__device--active"
-						@click="messagesStore.setDeviceFilter(device.id)"
+						@click="messagesStore.setDeviceFilter(device.deviceId)"
 					>
 						<q-item-section avatar><q-icon :name="protocolIcon(device.protocol)" /></q-item-section>
 						<q-item-section>
 							<q-item-label>{{ device.name }}</q-item-label>
 							<q-item-label caption>{{ t(`protocol.${device.protocol}`) }}</q-item-label>
 						</q-item-section>
-						<q-item-section side>
-							<q-btn flat dense round size="sm" color="primary" icon="mdi-flash" @click.stop="openFire(device.id)">
+						<q-item-section v-if="device.uuid" side>
+							<q-btn flat dense round size="sm" color="primary" icon="mdi-flash" @click.stop="openFire(device.uuid)">
 								<AppTooltip :content="t('console.fireEvent')" />
 							</q-btn>
 						</q-item-section>
@@ -220,15 +220,21 @@ const deviceProtocolFilter = ref<ProtocolId | null>(null);
 /**
  * Left-pane device list: configured devices unioned with any device seen in the
  * message stream, filtered by the search box.
+ *
+ * Keyed by the user-facing `deviceId` — that is the only identifier the stream
+ * carries and the value the console filters on. Keying by the catalog UUID
+ * instead duplicated every device the moment it produced its first frame (the
+ * stream entry never matched the UUID-keyed catalog entry). `uuid` keeps the
+ * catalog id for firing; it is null for a device seen only in the stream.
  */
 const deviceList = computed(() => {
-	const map = new Map<string, { id: string; name: string; protocol: ProtocolId }>();
+	const map = new Map<string, { deviceId: string; uuid: string | null; name: string; protocol: ProtocolId }>();
 	for (const device of devicesStore.items) {
-		map.set(device.id, { id: device.id, name: device.name, protocol: device.protocolId });
+		map.set(device.deviceId, { deviceId: device.deviceId, uuid: device.id, name: device.name, protocol: device.protocolId });
 	}
 	for (const message of messagesStore.items) {
 		if (!map.has(message.deviceId)) {
-			map.set(message.deviceId, { id: message.deviceId, name: message.deviceName, protocol: message.protocol });
+			map.set(message.deviceId, { deviceId: message.deviceId, uuid: null, name: message.deviceName, protocol: message.protocol });
 		}
 	}
 
@@ -248,7 +254,7 @@ const protocolFilterOptions = computed(() =>
 
 const activeProtocol = computed<ProtocolId | null>(() => {
 	const id = messagesStore.deviceFilter;
-	if (id) return deviceList.value.find((device) => device.id === id)?.protocol ?? null;
+	if (id) return deviceList.value.find((device) => device.deviceId === id)?.protocol ?? null;
 	const selected = filterValues.value.protocol;
 	return selected ? (selected as ProtocolId) : null;
 });
