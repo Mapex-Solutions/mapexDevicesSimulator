@@ -265,6 +265,7 @@ export default {
 	},
 	validation: {
 		required: 'Required',
+		jsonInvalid: 'Invalid JSON',
 		nameRequired: 'Device name is required.',
 		urlRequired: 'Target URL is required.',
 		brokerRequired: 'Broker URL is required.',

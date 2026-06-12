@@ -42,7 +42,7 @@
 
 		<template #footer>
 			<q-btn flat :label="t('common.cancel')" @click="open = false" />
-			<q-btn color="primary" icon="mdi-flash" :label="t('fireEvent.send')" :disable="!device || !isSupported" @click="onSend" />
+			<q-btn color="primary" icon="mdi-flash" :label="t('fireEvent.send')" :disable="!device || !isSupported || !bodyValid" @click="onSend" />
 		</template>
 	</GenericModal>
 </template>
@@ -70,7 +70,7 @@ import { useTranslations } from '@composables/i18n';
 
 /** UTILS */
 import { useQuasar } from 'quasar';
-import { buildHttpBody, renderTemplate } from '@utils/template';
+import { buildHttpBody, renderTemplate, validateJsonBody } from '@utils/template';
 
 /** SERVICES */
 import { sim } from '@services/sim';
@@ -121,6 +121,13 @@ const preview = computed(() =>
 		? renderTemplate(loraConfig.value.payloadHex, renderCtx.value)
 		: buildHttpBody(isMqtt.value ? mqttConfig.value : httpConfig.value, renderCtx.value),
 );
+
+const bodyValid = computed(() => {
+	if (isLora.value) return true;
+	const config = isMqtt.value ? mqttConfig.value : httpConfig.value;
+	if (config.bodyMode !== 'raw') return true;
+	return validateJsonBody(config.body).valid;
+});
 
 /** WATCHERS */
 watch(open, (isOpen) => {

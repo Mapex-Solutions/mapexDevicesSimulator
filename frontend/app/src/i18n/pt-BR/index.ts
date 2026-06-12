@@ -265,6 +265,7 @@ export default {
 	},
 	validation: {
 		required: 'Obrigatório',
+		jsonInvalid: 'JSON inválido',
 		nameRequired: 'O nome do dispositivo é obrigatório.',
 		urlRequired: 'A URL do alvo é obrigatória.',
 		brokerRequired: 'A URL do broker é obrigatória.',

@@ -21,8 +21,9 @@
 				dense
 				class="body-editor__raw"
 				input-style="min-height: 140px"
+				:rules="[jsonRule]"
+				lazy-rules
 				@update:model-value="(val) => patch({ body: String(val ?? '') })"
-				hide-bottom-space
 			/>
 			<TemplateHints />
 		</template>
@@ -57,6 +58,9 @@ import { TemplateHints } from '@components/TemplateHints';
 /** COMPOSABLES */
 import { useTranslations } from '@composables/i18n';
 
+/** UTILS */
+import { validateJsonBody } from '@utils/template';
+
 /** PROPS & EMITS */
 const props = defineProps<RequestBodyEditorProps>();
 const emit = defineEmits<RequestBodyEditorEmits>();
@@ -79,6 +83,17 @@ const bodyOptions = computed<{ label: string; value: HttpBodyMode }[]>(() => [
  */
 function patch(partial: Partial<RequestBodyEditorProps['modelValue']>): void {
 	emit('update:modelValue', { ...props.modelValue, ...partial });
+}
+
+/**
+ * Validate the raw body as JSON, tolerating {{ template }} placeholders. Returns
+ * true when valid, or a localized error message (with the parser detail) when not.
+ * @param {string | number | null} value - the textarea value
+ * @returns {true | string} true when valid, otherwise the error message
+ */
+function jsonRule(value: string | number | null): true | string {
+	const result = validateJsonBody(String(value ?? ''));
+	return result.valid || `${t('validation.jsonInvalid')} — ${result.detail}`;
 }
 </script>
 

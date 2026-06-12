@@ -127,6 +127,9 @@ import { LoraWanEventConfig, defaultLoraWanEvent } from '@components/protocols/L
 /** COMPOSABLES */
 import { useTranslations } from '@composables/i18n';
 
+/** UTILS */
+import { validateJsonBody } from '@utils/template';
+
 const HTTP_CONFIG = markRaw(HttpEventConfig);
 const MQTT_CONFIG = markRaw(MqttEventConfig);
 const LORA_CONFIG = markRaw(LoraWanEventConfig);
@@ -167,7 +170,13 @@ let seq = props.modelValue.reduce((max, event) => {
 const isHttp = computed(() => props.protocolId === 'http');
 const isMqtt = computed(() => props.protocolId === 'mqtt');
 const isLora = computed(() => props.protocolId === 'lorawan' || props.protocolId === 'basicstation');
-const canSubmit = computed(() => form.name.trim().length > 0);
+const bodyValid = computed(() => {
+	if (isLora.value) return true;
+	const config = isMqtt.value ? form.mqtt : form.http;
+	if (config.bodyMode !== 'raw') return true;
+	return validateJsonBody(config.body).valid;
+});
+const canSubmit = computed(() => form.name.trim().length > 0 && bodyValid.value);
 
 const configComponent = computed<Component>(() => {
 	if (isMqtt.value) return MQTT_CONFIG;
