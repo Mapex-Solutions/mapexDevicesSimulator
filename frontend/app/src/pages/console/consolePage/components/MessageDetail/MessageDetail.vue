@@ -1,57 +1,46 @@
 <template>
-	<div class="detail">
-		<div class="detail__header">
-			<span class="detail__title">{{ t('console.details') }}</span>
+	<div v-if="message" class="detail">
+		<div class="row items-center q-gutter-xs q-mb-sm">
+			<q-chip dense :color="dirColor" text-color="white" :icon="dirIcon" :label="dirLabel" />
+			<q-chip dense outline :label="t(`protocol.${message.protocol}`)" />
+			<q-space />
+			<span class="detail__ts">{{ message.ts }}</span>
 		</div>
 
-		<div v-if="!message" class="detail__empty">
-			<q-icon name="mdi-cursor-default-click-outline" size="32px" />
-			<span>{{ t('console.noSelection') }}</span>
+		<div class="detail__device">{{ message.deviceName }}</div>
+		<div class="detail__sub">
+			{{ message.summary }}
+			<q-badge v-if="message.status" :color="statusColor(message.status)" text-color="white" :label="message.status" class="q-ml-xs" />
 		</div>
 
-		<div v-else class="detail__body">
-			<div class="row items-center q-gutter-xs q-mb-sm">
-				<q-chip dense :color="dirColor" text-color="white" :icon="dirIcon" :label="dirLabel" />
-				<q-chip dense outline :label="t(`protocol.${message.protocol}`)" />
-				<q-space />
-				<span class="detail__ts">{{ message.ts }}</span>
-			</div>
+		<div class="detail__section-head row items-center justify-between">
+			<span class="row items-center no-wrap">
+				{{ t('console.payload') }}
+				<q-icon v-if="showDevAddrInfo" name="mdi-information-outline" size="16px" class="detail__info q-ml-xs">
+					<AppTooltip :content="t('console.devAddrInfo')" />
+				</q-icon>
+			</span>
+			<q-btn flat dense size="sm" no-caps icon="mdi-content-copy" :label="t('console.copy')" @click="copy(payloadText)" />
+		</div>
+		<pre class="detail__payload">{{ payloadText }}</pre>
 
-			<div class="detail__device">{{ message.deviceName }}</div>
-			<div class="detail__sub">
-				{{ message.summary }}
-				<q-badge v-if="message.status" :color="statusColor(message.status)" text-color="white" :label="message.status" class="q-ml-xs" />
-			</div>
-
+		<template v-if="message.response">
 			<div class="detail__section-head row items-center justify-between">
-				<span class="row items-center no-wrap">
-					{{ t('console.payload') }}
-					<q-icon v-if="showDevAddrInfo" name="mdi-information-outline" size="16px" class="detail__info q-ml-xs">
-						<AppTooltip :content="t('console.devAddrInfo')" />
-					</q-icon>
-				</span>
-				<q-btn flat dense size="sm" no-caps icon="mdi-content-copy" :label="t('console.copy')" @click="copy(payloadText)" />
+				<span>{{ t('console.response') }}</span>
+				<q-btn flat dense size="sm" no-caps icon="mdi-content-copy" :label="t('console.copy')" @click="copy(responseText)" />
 			</div>
-			<pre class="detail__payload">{{ payloadText }}</pre>
+			<pre class="detail__payload">{{ responseText }}</pre>
+		</template>
 
-			<template v-if="message.response">
-				<div class="detail__section-head row items-center justify-between">
-					<span>{{ t('console.response') }}</span>
-					<q-btn flat dense size="sm" no-caps icon="mdi-content-copy" :label="t('console.copy')" @click="copy(responseText)" />
+		<template v-if="metaEntries.length">
+			<div class="detail__section-head">{{ t('console.meta') }}</div>
+			<div class="detail__meta">
+				<div v-for="[key, value] in metaEntries" :key="key" class="detail__meta-row">
+					<span class="detail__meta-key">{{ key }}</span>
+					<span class="detail__meta-value">{{ value }}</span>
 				</div>
-				<pre class="detail__payload">{{ responseText }}</pre>
-			</template>
-
-			<template v-if="metaEntries.length">
-				<div class="detail__section-head">{{ t('console.meta') }}</div>
-				<div class="detail__meta">
-					<div v-for="[key, value] in metaEntries" :key="key" class="detail__meta-row">
-						<span class="detail__meta-key">{{ key }}</span>
-						<span class="detail__meta-value">{{ value }}</span>
-					</div>
-				</div>
-			</template>
-		</div>
+			</div>
+		</template>
 	</div>
 </template>
 
@@ -124,40 +113,6 @@ async function copy(text: string): Promise<void> {
 
 <style scoped lang="scss">
 .detail {
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-	background: var(--mapex-surface-elevated);
-
-	&__header {
-		padding: var(--mapex-spacing-md) var(--mapex-spacing-lg);
-		border-bottom: 1px solid var(--mapex-divider);
-	}
-
-	&__title {
-		font-size: var(--mapex-font-sm);
-		font-weight: var(--mapex-font-weight-semibold);
-		color: var(--mapex-text-primary);
-	}
-
-	&__empty {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: var(--mapex-spacing-md);
-		color: var(--mapex-text-muted);
-		padding: var(--mapex-spacing-2xl);
-		text-align: center;
-	}
-
-	&__body {
-		flex: 1;
-		overflow-y: auto;
-		padding: var(--mapex-spacing-lg);
-	}
-
 	&__ts {
 		font-size: var(--mapex-font-xs);
 		color: var(--mapex-text-muted);

@@ -119,7 +119,7 @@
 						type="button"
 						class="msg"
 						:class="{ 'msg--active': message.id === messagesStore.selectedId }"
-						@click="messagesStore.select(message.id)"
+						@click="selectMessage(message.id)"
 					>
 						<q-icon :name="dirIcon(message.direction)" :color="dirColor(message.direction)" size="18px" class="msg__dir" />
 						<span class="msg__ts">{{ message.ts }}</span>
@@ -130,12 +130,18 @@
 					</button>
 				</div>
 			</main>
-
-			<!-- Detail -->
-			<aside class="console__detail">
-				<MessageDetail :message="messagesStore.selected" />
-			</aside>
 		</div>
+
+		<!-- Message detail (opens on click, closable) -->
+		<GenericDrawer
+			v-model="detailOpen"
+			:title="t('console.details')"
+			icon="mdi-text-box-search-outline"
+			:close-tooltip="t('common.close')"
+			@close="onDetailClose"
+		>
+			<MessageDetail :message="messagesStore.selected" />
+		</GenericDrawer>
 
 		<GenericModal v-model="filterOpen" :title="t('console.filters')" icon="mdi-filter-variant">
 			<MessageFilterBar :protocol="activeProtocol" v-model="filterValues" />
@@ -161,6 +167,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 /** COMPONENTS */
 import { AppTooltip } from '@components/AppTooltip';
 import { FireEventDialog } from '@components/FireEventDialog';
+import { GenericDrawer } from '@components/GenericDrawer';
 import { GenericModal } from '@components/GenericModal';
 import { PageHeader } from '@components/PageHeader';
 import { MessageDetail } from './components/MessageDetail';
@@ -188,6 +195,7 @@ const messagesStore = useMessagesStore();
 const search = ref('');
 const fireOpen = ref(false);
 const fireDeviceId = ref<string | null>(null);
+const detailOpen = ref(false);
 const filterOpen = ref(false);
 const filterValues = ref<FilterValues>({});
 const deviceProtocolFilter = ref<ProtocolId | null>(null);
@@ -273,6 +281,23 @@ function dirColor(direction: MessageDirection): string {
 }
 
 /**
+ * Select a message and open the detail drawer on it.
+ * @param {string} id - the message id to inspect
+ */
+function selectMessage(id: string): void {
+	messagesStore.select(id);
+	detailOpen.value = true;
+}
+
+/**
+ * Clear the selection when the detail drawer closes, so the row highlight drops
+ * and reopening the same row works cleanly.
+ */
+function onDetailClose(): void {
+	messagesStore.select(null);
+}
+
+/**
  * Open the fire-event dialog for a specific device.
  * @param {string} deviceId - the device to fire from
  */
@@ -313,7 +338,13 @@ onUnmounted(() => {
 }
 
 .console__pane-head {
-	padding: var(--mapex-spacing-md) var(--mapex-spacing-lg);
+	// Fixed bar height so all three pane headers line up, even though the middle
+	// one carries the filter/clear buttons and the others are plain text. Keep
+	// this in sync with the message-detail header height.
+	display: flex;
+	align-items: center;
+	min-height: 52px;
+	padding: 0 var(--mapex-spacing-lg);
 	border-bottom: 1px solid var(--mapex-divider);
 	font-size: var(--mapex-font-sm);
 	font-weight: var(--mapex-font-weight-semibold);
@@ -360,7 +391,6 @@ onUnmounted(() => {
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
-	border-right: 1px solid var(--mapex-divider);
 
 	.console__empty {
 		flex: 1;
@@ -376,11 +406,6 @@ onUnmounted(() => {
 		flex: 1;
 		overflow-y: auto;
 	}
-}
-
-.console__detail {
-	width: 380px;
-	flex-shrink: 0;
 }
 
 .msg {
