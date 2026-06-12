@@ -8,9 +8,11 @@
   "private": true,
   "scripts": {
     "dev": "quasar dev",
-    "dev:electron": "quasar dev -m electron",
+    "dev:electron": "npm run build:sidecar && quasar dev -m electron",
     "build": "quasar build",
-    "build:electron": "quasar build -m electron",
+    "build:electron": "npm run build:sidecar:all && quasar build -m electron",
+    "build:sidecar": "node src-electron/sidecar/build-sidecar.mjs",
+    "build:sidecar:all": "node src-electron/sidecar/build-sidecar.mjs --all",
     "postinstall": "quasar prepare",
     "type-check": "vue-tsc --noEmit",
     "test": "vitest run",

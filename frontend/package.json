@@ -13,6 +13,8 @@
     "dev:electron": "npm -w app run dev:electron",
     "build": "npm -w app run build",
     "build:electron": "npm -w app run build:electron",
+    "build:sidecar": "npm -w app run build:sidecar",
+    "build:sidecar:all": "npm -w app run build:sidecar:all",
     "type-check": "npm -w app run type-check",
     "test": "npm -w app run test"
   },
