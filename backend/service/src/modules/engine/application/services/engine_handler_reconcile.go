@@ -61,6 +61,9 @@ func (s *EngineService) buildDesired() map[string]*job {
 		if !d.Enabled {
 			continue
 		}
+		// A device whose gateway is offline keeps its scheduled jobs: each fire still
+		// runs so the console reports the attempt (with a gateway-offline status); the
+		// dispatcher is what skips the actual uplink when there is no live link.
 		events, err := domainsvc.ParseEvents(d.Events)
 		if err != nil {
 			continue

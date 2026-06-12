@@ -19,6 +19,13 @@ export const ZodLoraWanActivationSchema = z.enum(['otaa', 'abp']);
 export const ZodLoraWanMacVersionSchema = z.enum(['1.0.2', '1.0.3', '1.0.4', '1.1.0']);
 
 /**
+ * LoRaWAN device class. A (RX windows after each uplink) is the default; C keeps a
+ * continuous receive window. The chosen class must match the device profile on the
+ * LNS, which is what schedules the downlinks.
+ */
+export const ZodLoraWanClassSchema = z.enum(['A', 'C']);
+
+/**
  * HTTP target configuration. Credentials are sent only at run time and never
  * logged by the engine; headers carry Content-Type and any custom entries.
  */
@@ -79,6 +86,7 @@ export const ZodLoraWanConnectionConfigSchema = z.object({
 	gatewayId: z.string(),
 	region: ZodGatewayRegionSchema,
 	macVersion: ZodLoraWanMacVersionSchema,
+	class: ZodLoraWanClassSchema.default('A'),
 	activation: ZodLoraWanActivationSchema,
 	devEui: z.string(),
 	joinEui: z.string(),
@@ -100,6 +108,7 @@ export const ZodBasicsStationConnectionConfigSchema = z.object({
 	gatewayEui: z.string(),
 	region: ZodGatewayRegionSchema,
 	macVersion: ZodLoraWanMacVersionSchema,
+	class: ZodLoraWanClassSchema.default('A'),
 	activation: ZodLoraWanActivationSchema,
 	devEui: z.string(),
 	joinEui: z.string(),

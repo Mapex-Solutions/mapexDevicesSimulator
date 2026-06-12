@@ -58,18 +58,34 @@
 			/>
 		</div>
 
-		<q-select
-			:model-value="modelValue.activation"
-			:options="activationOptions"
-			:label="t('connections.lorawan.activation')"
-			outlined
-			dense
-			stack-label
-			hide-bottom-space
-			emit-value
-			map-options
-			@update:model-value="(val) => patch({ activation: val })"
-		/>
+		<div class="bs-config__pair">
+			<q-select
+				class="bs-config__field"
+				:model-value="modelValue.class"
+				:options="classOptions"
+				:label="t('connections.lorawan.deviceClass')"
+				outlined
+				dense
+				stack-label
+				hide-bottom-space
+				emit-value
+				map-options
+				@update:model-value="(val) => patch({ class: val })"
+			/>
+			<q-select
+				class="bs-config__field"
+				:model-value="modelValue.activation"
+				:options="activationOptions"
+				:label="t('connections.lorawan.activation')"
+				outlined
+				dense
+				stack-label
+				hide-bottom-space
+				emit-value
+				map-options
+				@update:model-value="(val) => patch({ activation: val })"
+			/>
+		</div>
 
 		<!-- OTAA -->
 		<template v-if="modelValue.activation === 'otaa'">
@@ -190,6 +206,11 @@ const macVersionOptions = computed(() => MAC_VERSIONS.map((version) => ({ label:
 const activationOptions = computed<{ label: string; value: LoraWanActivation }[]>(() => [
 	{ label: t('connections.lorawan.otaa'), value: 'otaa' },
 	{ label: t('connections.lorawan.abp'), value: 'abp' },
+]);
+
+const classOptions = computed(() => [
+	{ label: t('connections.lorawan.classA'), value: 'A' as const },
+	{ label: t('connections.lorawan.classC'), value: 'C' as const },
 ]);
 
 /** FUNCTIONS */

@@ -29,6 +29,7 @@ type LoRaWANSpec struct {
 	Region     string
 	MACVersion string
 	Activation string // otaa | abp
+	Class      string // A | C
 
 	JoinEUI string
 	DevEUI  string

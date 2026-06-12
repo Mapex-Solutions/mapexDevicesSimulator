@@ -67,20 +67,25 @@ func (c *lorawanConnector) Open(ctx context.Context, spec ports.SessionSpec, in 
 		return nil, err
 	}
 
-	sess := &lorawanSession{dev: dev, link: link, conn: c, region: region}
+	sess := &lorawanSession{
+		dev: dev, link: link, conn: c, region: region,
+		devEui:  spec.LoRaWAN.DevEUI,
+		joinEui: spec.LoRaWAN.JoinEUI,
+		class:   classOrA(spec.LoRaWAN.Class),
+	}
 	deliver := func(phy []byte) { sess.onDownlink(phy, in) }
 
 	switch {
 	case spec.LoRaWAN.Activation == "abp":
 		sess.addr = dev.DevAddr()
 		link.router.bind(sess.addr, deliver)
-		status("activated", "ABP")
+		status("activated", "ABP · "+sess.joinedDetail())
 	case dev.Joined():
 		// Already joined on a previous connection: resume rather than re-join, so a
 		// transient reconnect does not burn a DevNonce or reset the session.
 		sess.addr = dev.DevAddr()
 		link.router.bind(sess.addr, deliver)
-		status("joined", hex.EncodeToString(sess.addr[:]))
+		status("joined", sess.joinedDetail())
 	default:
 		if err := sess.join(link, status, deliver); err != nil {
 			c.releaseLink(link)
@@ -105,24 +110,44 @@ func (s *lorawanSession) join(link *sharedLink, status ports.StatusSink, deliver
 	if err != nil {
 		return err
 	}
-	status("join-request", "")
+	status("join-request", "DevEUI "+s.devEui+" · JoinEUI "+s.joinEui)
 	if err := link.transport.sendUp(phy, s.region.UplinkDR, s.region.UplinkFrequency, dataRate(s.region.UplinkSF), -42, 9.0); err != nil {
 		return err
 	}
 
 	select {
 	case ja := <-accepted:
-		status("join-accept", "")
 		if err := s.dev.ProcessJoinAccept(ja); err != nil {
 			return err
 		}
 		s.addr = s.dev.DevAddr()
+		status("join-accept", "DevAddr "+formatDevAddr(s.addr))
 		link.router.bind(s.addr, deliver)
-		status("joined", hex.EncodeToString(s.addr[:]))
+		status("joined", s.joinedDetail())
 		return nil
 	case <-time.After(joinTimeout):
 		return errors.New("lorawan: join accept timeout")
 	}
+}
+
+// joinedDetail is the human detail shown on the join-accept/joined console frames:
+// the network address the LNS assigned plus the device class.
+func (s *lorawanSession) joinedDetail() string {
+	return "DevAddr " + formatDevAddr(s.addr) + " · Class " + s.class
+}
+
+// formatDevAddr renders a 4-byte DevAddr as upper-case colon-separated hex.
+func formatDevAddr(a [4]byte) string {
+	return fmt.Sprintf("%02X:%02X:%02X:%02X", a[0], a[1], a[2], a[3])
+}
+
+// classOrA defaults an empty device class to A (the only class supported without
+// extra RX scheduling); C is carried through so the LNS profile can match.
+func classOrA(c string) string {
+	if c == "" {
+		return "A"
+	}
+	return c
 }
 
 // Send builds the next uplink from the rendered hex payload and transmits it.

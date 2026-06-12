@@ -61,6 +61,16 @@ func (f *fakePublisher) Publish(m consoleDtos.ConsoleMessage) {
 	f.mu.Unlock()
 }
 func (f *fakePublisher) count() int { f.mu.Lock(); defer f.mu.Unlock(); return len(f.msgs) }
+func (f *fakePublisher) has(direction, kind, status string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, m := range f.msgs {
+		if m.Direction == direction && m.Kind == kind && m.Status == status {
+			return true
+		}
+	}
+	return false
+}
 
 var _ consolePorts.Publisher = (*fakePublisher)(nil)
 

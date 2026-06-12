@@ -43,6 +43,7 @@ type LoRaWANConnectionConfig struct {
 	GatewayID  string `json:"gatewayId"`
 	Region     string `json:"region"`
 	MACVersion string `json:"macVersion"`
+	Class      string `json:"class"`
 	Activation string `json:"activation"`
 	DevEUI     string `json:"devEui"`
 	JoinEUI    string `json:"joinEui"`
@@ -60,6 +61,7 @@ type BasicsStationConnectionConfig struct {
 	GatewayEUI string `json:"gatewayEui"`
 	Region     string `json:"region"`
 	MACVersion string `json:"macVersion"`
+	Class      string `json:"class"`
 	Activation string `json:"activation"`
 	DevEUI     string `json:"devEui"`
 	JoinEUI    string `json:"joinEui"`

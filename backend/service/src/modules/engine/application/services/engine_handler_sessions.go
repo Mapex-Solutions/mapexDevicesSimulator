@@ -132,6 +132,7 @@ func (s *EngineService) buildLoRaWANSessionSpec(spec enginePorts.SessionSpec, co
 		Region:       cfg.Region,
 		MACVersion:   cfg.MACVersion,
 		Activation:   cfg.Activation,
+		Class:        cfg.Class,
 		JoinEUI:      cfg.JoinEUI,
 		DevEUI:       cfg.DevEUI,
 		AppKey:       cfg.AppKey,
@@ -167,6 +168,7 @@ func (s *EngineService) buildBasicsStationSessionSpec(spec enginePorts.SessionSp
 		Region:       cfg.Region,
 		MACVersion:   cfg.MACVersion,
 		Activation:   cfg.Activation,
+		Class:        cfg.Class,
 		JoinEUI:      cfg.JoinEUI,
 		DevEUI:       cfg.DevEUI,
 		AppKey:       cfg.AppKey,
@@ -211,6 +213,33 @@ func (s *EngineService) findGatewayByEUI(eui string) (gatewayscontract.Gateway, 
 	return gatewayscontract.Gateway{}, false
 }
 
+// gatewayPermits reports whether a device may run given its gateway's enabled flag.
+// A LoRaWAN device rides a gateway entity referenced by id; a Basics Station device
+// carries its own link but is still gated by a gateway entity sharing its EUI when
+// one exists. Protocols without a gateway are always permitted. Both the scheduler
+// and the session manager consult this, so disabling a gateway takes its devices
+// fully offline -- it stops their scheduled fires, not only their live session.
+func (s *EngineService) gatewayPermits(d devicescontract.Device) bool {
+	switch d.ProtocolID {
+	case "lorawan":
+		var cfg entities.LoRaWANConnectionConfig
+		if err := json.Unmarshal(d.Config, &cfg); err != nil {
+			return false
+		}
+		gw, ok := s.findGateway(cfg.GatewayID)
+		return ok && gw.Enabled
+	case "basicstation":
+		var cfg entities.BasicsStationConnectionConfig
+		if err := json.Unmarshal(d.Config, &cfg); err != nil {
+			return false
+		}
+		gw, ok := s.findGatewayByEUI(cfg.GatewayEUI)
+		return !ok || gw.Enabled
+	default:
+		return true
+	}
+}
+
 // superviseSession owns one device's connection lifecycle: connect, hold open
 // (re-opening on a silent drop), and reconnect forever with bounded backoff. Every
 // transition is streamed to the console so the full status is visible.
@@ -231,7 +260,7 @@ func (s *EngineService) superviseSession(ctx context.Context, spec enginePorts.S
 			return
 		}
 		attempt++
-		s.emitStatus(spec, "connecting", spec.BrokerURL)
+		s.emitStatus(spec, "connecting", endpointLabel(spec))
 
 		sess, err := connector.Open(ctx, spec, inbound, status)
 		if err != nil {
@@ -250,7 +279,7 @@ func (s *EngineService) superviseSession(ctx context.Context, spec enginePorts.S
 		attempt = 0
 		backoff = sessionBackoffInitial
 		h.set(sess)
-		s.emitStatus(spec, "connected", spec.BrokerURL)
+		s.emitStatus(spec, "connected", endpointLabel(spec))
 
 		stopped := s.monitorSession(ctx, sess)
 		h.set(nil)
@@ -332,6 +361,20 @@ func (s *EngineService) emitInbound(spec enginePorts.SessionSpec, msg enginePort
 }
 
 // emitStatus streams a connection-lifecycle frame (system/status) to the console.
+// endpointLabel is the human endpoint shown on the connect status frames: the
+// broker URL for MQTT, or the gateway link (udp host:port, or the LNS URI) plus the
+// gateway EUI for LoRaWAN / Basics Station.
+func endpointLabel(spec enginePorts.SessionSpec) string {
+	lw := spec.LoRaWAN
+	if lw == nil {
+		return spec.BrokerURL
+	}
+	if lw.LinkProtocol == "udp" {
+		return fmt.Sprintf("udp %s:%d · gw %s", lw.LinkUDPHost, lw.LinkUDPPort, lw.GatewayEUI)
+	}
+	return fmt.Sprintf("%s · gw %s", lw.LinkLNSURI, lw.GatewayEUI)
+}
+
 func (s *EngineService) emitStatus(spec enginePorts.SessionSpec, status, detail string) {
 	now := time.Now().UTC().Format(time.RFC3339)
 	s.deps.Console.Publish(consoleDtos.ConsoleMessage{

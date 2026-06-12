@@ -24,7 +24,12 @@
 			</div>
 
 			<div class="detail__section-head row items-center justify-between">
-				<span>{{ t('console.payload') }}</span>
+				<span class="row items-center no-wrap">
+					{{ t('console.payload') }}
+					<q-icon v-if="showDevAddrInfo" name="mdi-information-outline" size="16px" class="detail__info q-ml-xs">
+						<AppTooltip :content="t('console.devAddrInfo')" />
+					</q-icon>
+				</span>
 				<q-btn flat dense size="sm" no-caps icon="mdi-content-copy" :label="t('console.copy')" @click="copy(message.payload)" />
 			</div>
 			<pre class="detail__payload">{{ message.payload }}</pre>
@@ -49,6 +54,9 @@ import type { MessageDetailProps } from './interfaces';
 /** VUE IMPORTS */
 import { computed } from 'vue';
 
+/** COMPONENTS */
+import { AppTooltip } from '@components/AppTooltip';
+
 /** COMPOSABLES */
 import { useTranslations } from '@composables/i18n';
 
@@ -64,6 +72,10 @@ const $q = useQuasar();
 
 /** COMPUTED */
 const metaEntries = computed(() => Object.entries(props.message?.meta ?? {}));
+
+// The join lifecycle statuses carry the DevAddr in their payload; show an info hint
+// explaining what that address is.
+const showDevAddrInfo = computed(() => ['joined', 'join-accept', 'activated'].includes(props.message?.status ?? ''));
 
 const dirColor = computed(() => {
 	if (props.message?.direction === 'up') return 'teal';
@@ -156,6 +168,11 @@ async function copy(text: string): Promise<void> {
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
 		color: var(--mapex-text-secondary);
+	}
+
+	&__info {
+		color: var(--mapex-text-muted);
+		cursor: help;
 	}
 
 	&__payload {

@@ -43,6 +43,11 @@ type lorawanSession struct {
 	conn   *lorawanConnector
 	region band.Region
 	addr   [4]byte
+
+	// Identity carried for the console status frames.
+	devEui  string
+	joinEui string
+	class   string // LoRaWAN device class: A or C
 }
 
 // linkTransport is one live connection to the LNS (Basics Station WS or Semtech

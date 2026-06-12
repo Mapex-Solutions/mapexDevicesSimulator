@@ -13,6 +13,7 @@ import (
 	enginePorts "simulator/service/src/modules/engine/application/ports"
 	dispatch "simulator/service/src/modules/engine/infrastructure/dispatch"
 	session "simulator/service/src/modules/engine/infrastructure/session"
+	gatewaysDtos "simulator/service/src/modules/gateways/application/dtos"
 	"simulator/service/src/shared/reconcile"
 )
 
@@ -65,6 +66,42 @@ func TestEngine_FireByEventID(t *testing.T) {
 	}
 	if pub.count() == 0 {
 		t.Fatal("fire should stream a console frame")
+	}
+}
+
+// A device whose gateway is offline has no live link, so a fire does not reach the
+// LNS -- but it must still surface on the console as a system status frame naming
+// the gateway as offline, so the user sees the attempt.
+func TestEngine_FireOfflineGatewayReportsStatus(t *testing.T) {
+	bsDev := devicesDtos.Device{
+		ID: "bs1", Enabled: true, StoreLogs: true, Name: "BS", DeviceID: "dev-bs", ProtocolID: "basicstation",
+		Config: json.RawMessage(`{"gatewayEui":"0102030405060708","lnsUri":"ws://127.0.0.1:3001","region":"EU868",` +
+			`"macVersion":"1.0.3","activation":"otaa","devEui":"0011223344556677","joinEui":"0000000000000000",` +
+			`"appKey":"00112233445566778899AABBCCDDEEFF"}`),
+		Events: json.RawMessage(`[{"id":"e1","name":"u","lorawan":{"fport":2,"confirmed":false,"payloadHex":"00"}}]`),
+	}
+	disabledGw := gatewaysDtos.Gateway{
+		ID: "gw1", EUI: "0102030405060708", Enabled: false, Region: "EU868",
+		Link: json.RawMessage(`{"protocol":"basicstation","lnsUri":"ws://127.0.0.1:3001"}`),
+	}
+	pub := &fakePublisher{}
+	eng := New(di.EngineServiceDI{
+		Devices:    &fakeDevices{list: []devicesDtos.Device{bsDev}},
+		Gateways:   &fakeGateways{list: []gatewaysDtos.Gateway{disabledGw}},
+		Logs:       &fakeLogWriter{},
+		Console:    pub,
+		Registry:   dispatch.NewRegistry(),
+		Connectors: session.NewConnectorRegistry(),
+		Reconcile:  reconcile.New(),
+	})
+	eng.OnMount() // a disabled gateway opens no session
+	defer eng.OnShutdown(context.Background())
+
+	if err := eng.Fire(context.Background(), "bs1", enginePorts.FireInput{EventID: "e1"}); err != nil {
+		t.Fatalf("fire should not error, got %v", err)
+	}
+	if !pub.has("system", "status", "gateway-offline") {
+		t.Fatal("fire with an offline gateway must report a system gateway-offline status")
 	}
 }
 

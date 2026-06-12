@@ -39,10 +39,51 @@ func (s *EngineService) process(task fireTask) {
 
 	disp, ok := s.deps.Registry.For(spec.protocol)
 	if !ok {
+		// No live session and no one-shot dispatcher for this protocol (a LoRaWAN or
+		// Basics Station device with no link). Report the attempt to the console as a
+		// status frame instead of dropping it silently, so the user sees the device
+		// tried and why it could not send.
+		s.reportNoLink(spec, payload, summary)
 		return
 	}
 	res := disp.Dispatch(s.ctx, req)
 	s.report(spec, payload, summary, res)
+}
+
+// reportNoLink streams a system status frame (and a log when storeLogs) for a fire
+// that had no live link to go out on, so the attempt is visible on the console. The
+// status names the cause: the device's gateway is offline, or the session is simply
+// not up yet.
+func (s *EngineService) reportNoLink(spec sendSpec, payload, summary string) {
+	status := "disconnected"
+	if dev, err := s.findDevice(s.ctx, spec.deviceKey); err == nil && !s.gatewayPermits(*dev) {
+		status = "gateway-offline"
+	}
+	now := time.Now().UTC().Format(time.RFC3339)
+	s.deps.Console.Publish(consoleDtos.ConsoleMessage{
+		ID:         uuid.NewString(),
+		TS:         now,
+		Protocol:   spec.protocol,
+		DeviceID:   spec.deviceID,
+		DeviceName: spec.deviceName,
+		Direction:  "system",
+		Kind:       "status",
+		Summary:    summary,
+		Payload:    payload,
+		Status:     status,
+	})
+	if spec.storeLogs {
+		_ = s.deps.Logs.Append(s.ctx, &logsDtos.LogInput{
+			Protocol:   spec.protocol,
+			DeviceID:   spec.deviceID,
+			DeviceName: spec.deviceName,
+			Direction:  "system",
+			Kind:       "status",
+			Summary:    summary,
+			Status:     status,
+			Payload:    payload,
+		})
+	}
 }
 
 // buildRequest resolves the protocol-specific dispatch request and a one-line
