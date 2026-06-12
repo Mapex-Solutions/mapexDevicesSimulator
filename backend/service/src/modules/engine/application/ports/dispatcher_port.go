@@ -25,9 +25,10 @@ type DispatchRequest struct {
 
 // DispatchResult reports the outcome of one send, for the console/log line.
 type DispatchResult struct {
-	OK     bool
-	Status string // protocol status, e.g. "200" or "qos1"
-	Err    error
+	OK       bool
+	Status   string // protocol status, e.g. "200" or "qos1"
+	Response string // body the endpoint replied with (HTTP), capped; empty otherwise
+	Err      error
 }
 
 // Dispatcher sends a resolved message over one protocol.

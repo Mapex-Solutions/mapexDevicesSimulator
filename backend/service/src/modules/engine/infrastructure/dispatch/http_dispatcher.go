@@ -43,8 +43,9 @@ func (d *httpDispatcher) Dispatch(ctx context.Context, req ports.DispatchRequest
 		return ports.DispatchResult{Err: err}
 	}
 	defer resp.Body.Close()
-	_, _ = io.Copy(io.Discard, resp.Body)
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, httpResponseCaptureLimit))
+	_, _ = io.Copy(io.Discard, resp.Body) // drain the rest so the connection can be reused
 
 	ok := resp.StatusCode >= 200 && resp.StatusCode < 300
-	return ports.DispatchResult{OK: ok, Status: strconv.Itoa(resp.StatusCode)}
+	return ports.DispatchResult{OK: ok, Status: strconv.Itoa(resp.StatusCode), Response: string(body)}
 }

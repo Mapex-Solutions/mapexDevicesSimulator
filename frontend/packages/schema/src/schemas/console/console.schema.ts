@@ -17,6 +17,7 @@ export const ZodConsoleMessageSchema = z.object({
 	kind: ZodLogKindSchema,
 	summary: z.string(),
 	payload: z.string(),
+	response: z.string().optional(),
 	status: z.string().optional(),
 	meta: z.record(z.string()).optional(),
 });

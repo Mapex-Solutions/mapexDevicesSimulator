@@ -13,6 +13,7 @@ type ConsoleMessage struct {
 	Kind       string            `json:"kind"`
 	Summary    string            `json:"summary"`
 	Payload    string            `json:"payload"`
+	Response   string            `json:"response,omitempty"` // endpoint's reply (HTTP body); empty otherwise
 	Status     string            `json:"status,omitempty"`
 	Meta       map[string]string `json:"meta,omitempty"`
 }

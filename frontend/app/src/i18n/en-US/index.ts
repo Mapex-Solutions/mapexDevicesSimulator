@@ -39,6 +39,7 @@ export default {
 		copyPayload: 'Copy payload',
 		copied: 'Copied to clipboard',
 		payload: 'Payload',
+		response: 'Response',
 		devAddrInfo: 'DevAddr — the 4-byte network address the LNS assigns to the device on the OTAA join. It identifies the device in every uplink and downlink after joining.',
 		meta: 'Metadata',
 		dirUp: 'Uplink',

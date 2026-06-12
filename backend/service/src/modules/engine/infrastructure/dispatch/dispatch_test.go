@@ -18,6 +18,7 @@ func TestHTTPDispatcher_Sends(t *testing.T) {
 		b, _ := io.ReadAll(r.Body)
 		body = string(b)
 		w.WriteHeader(http.StatusAccepted)
+		_, _ = w.Write([]byte(`{"ok":true}`))
 	}))
 	defer srv.Close()
 
@@ -29,6 +30,9 @@ func TestHTTPDispatcher_Sends(t *testing.T) {
 	})
 	if !res.OK || res.Status != "202" {
 		t.Fatalf("result = %+v", res)
+	}
+	if res.Response != `{"ok":true}` {
+		t.Fatalf("expected captured response body, got %q", res.Response)
 	}
 	if method != http.MethodPost || apiKey != "k" || body != `{"t":1}` {
 		t.Fatalf("server got method=%s apiKey=%s body=%s", method, apiKey, body)

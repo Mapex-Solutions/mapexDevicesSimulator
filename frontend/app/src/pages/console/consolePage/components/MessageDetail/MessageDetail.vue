@@ -20,7 +20,7 @@
 			<div class="detail__device">{{ message.deviceName }}</div>
 			<div class="detail__sub">
 				{{ message.summary }}
-				<q-badge v-if="message.status" color="grey-7" :label="message.status" class="q-ml-xs" />
+				<q-badge v-if="message.status" :color="statusColor(message.status)" text-color="white" :label="message.status" class="q-ml-xs" />
 			</div>
 
 			<div class="detail__section-head row items-center justify-between">
@@ -30,9 +30,17 @@
 						<AppTooltip :content="t('console.devAddrInfo')" />
 					</q-icon>
 				</span>
-				<q-btn flat dense size="sm" no-caps icon="mdi-content-copy" :label="t('console.copy')" @click="copy(message.payload)" />
+				<q-btn flat dense size="sm" no-caps icon="mdi-content-copy" :label="t('console.copy')" @click="copy(payloadText)" />
 			</div>
-			<pre class="detail__payload">{{ message.payload }}</pre>
+			<pre class="detail__payload">{{ payloadText }}</pre>
+
+			<template v-if="message.response">
+				<div class="detail__section-head row items-center justify-between">
+					<span>{{ t('console.response') }}</span>
+					<q-btn flat dense size="sm" no-caps icon="mdi-content-copy" :label="t('console.copy')" @click="copy(responseText)" />
+				</div>
+				<pre class="detail__payload">{{ responseText }}</pre>
+			</template>
 
 			<template v-if="metaEntries.length">
 				<div class="detail__section-head">{{ t('console.meta') }}</div>
@@ -62,6 +70,8 @@ import { useTranslations } from '@composables/i18n';
 
 /** UTILS */
 import { copyToClipboard, useQuasar } from 'quasar';
+import { formatJson } from '@utils/format-json';
+import { statusColor } from '@utils/status-color';
 
 /** PROPS & EMITS */
 const props = defineProps<MessageDetailProps>();
@@ -72,6 +82,11 @@ const $q = useQuasar();
 
 /** COMPUTED */
 const metaEntries = computed(() => Object.entries(props.message?.meta ?? {}));
+
+// Pretty-print payload/response when they are JSON, so an HTTP body or API reply
+// reads cleanly; non-JSON content (hex, plain text) is shown verbatim.
+const payloadText = computed(() => formatJson(props.message?.payload ?? ''));
+const responseText = computed(() => formatJson(props.message?.response ?? ''));
 
 // The join lifecycle statuses carry the DevAddr in their payload; show an info hint
 // explaining what that address is.

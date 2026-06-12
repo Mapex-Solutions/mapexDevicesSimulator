@@ -71,6 +71,7 @@ import { useTranslations } from '@composables/i18n';
 /** UTILS */
 import { useQuasar } from 'quasar';
 import { buildHttpBody, renderTemplate, validateJsonBody } from '@utils/template';
+import { formatJson } from '@utils/format-json';
 
 /** SERVICES */
 import { sim } from '@services/sim';
@@ -119,7 +120,7 @@ const renderCtx = computed(() => ({
 const preview = computed(() =>
 	isLora.value
 		? renderTemplate(loraConfig.value.payloadHex, renderCtx.value)
-		: buildHttpBody(isMqtt.value ? mqttConfig.value : httpConfig.value, renderCtx.value),
+		: formatJson(buildHttpBody(isMqtt.value ? mqttConfig.value : httpConfig.value, renderCtx.value)),
 );
 
 const bodyValid = computed(() => {

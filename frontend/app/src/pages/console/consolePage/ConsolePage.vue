@@ -126,7 +126,7 @@
 						<q-badge outline color="grey" :label="t(`protocol.${message.protocol}`)" class="msg__proto" />
 						<span class="msg__device">{{ message.deviceName }}</span>
 						<span class="msg__summary">{{ message.summary }}</span>
-						<q-badge v-if="message.status" color="grey-8" :label="message.status" class="msg__status" />
+						<q-badge v-if="message.status" :color="statusColor(message.status)" text-color="white" :label="message.status" class="msg__status" />
 					</button>
 				</div>
 			</main>
@@ -171,6 +171,7 @@ import { useTranslations } from '@composables/i18n';
 
 /** UTILS */
 import { applyMessageFilters, getMessageFilterFields } from '@utils/message-filters';
+import { statusColor } from '@utils/status-color';
 
 /** STORES */
 import { useAppStore } from '@stores/app';

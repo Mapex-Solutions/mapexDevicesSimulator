@@ -136,6 +136,7 @@ func (s *EngineService) report(spec sendSpec, payload, summary string, res engin
 		Kind:       "data",
 		Summary:    summary,
 		Payload:    payload,
+		Response:   res.Response,
 		Status:     status,
 	})
 
