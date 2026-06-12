@@ -284,7 +284,6 @@ function openFire(deviceId: string): void {
 onMounted(() => {
 	void appStore.startHealthPolling();
 	void devicesStore.fetch();
-	messagesStore.seedSamples();
 	messagesStore.connect();
 });
 

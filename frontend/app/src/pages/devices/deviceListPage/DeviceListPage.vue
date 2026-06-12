@@ -203,8 +203,12 @@ function onDelete(device: Device): void {
 		title: t('common.delete'),
 		message: t('common.deleteConfirm', { name: device.name }),
 		cancel: true,
-	}).onOk(() => {
-		void devicesStore.remove(device.id);
+	}).onOk(async () => {
+		try {
+			await devicesStore.remove(device.id);
+		} catch (err) {
+			$q.notify({ type: 'negative', message: err instanceof Error ? err.message : t('common.deleteFailed') });
+		}
 	});
 }
 

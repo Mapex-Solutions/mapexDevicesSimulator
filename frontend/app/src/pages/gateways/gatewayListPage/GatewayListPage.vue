@@ -203,8 +203,12 @@ function onDelete(gateway: Gateway): void {
 		title: t('common.delete'),
 		message: t('common.deleteConfirm', { name: gateway.name }),
 		cancel: true,
-	}).onOk(() => {
-		void gatewaysStore.remove(gateway.id);
+	}).onOk(async () => {
+		try {
+			await gatewaysStore.remove(gateway.id);
+		} catch (err) {
+			$q.notify({ type: 'negative', message: err instanceof Error ? err.message : t('common.deleteFailed') });
+		}
 	});
 }
 

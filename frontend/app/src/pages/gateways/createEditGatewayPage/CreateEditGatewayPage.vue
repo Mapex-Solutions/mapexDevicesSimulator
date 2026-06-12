@@ -353,6 +353,8 @@ async function onSave(): Promise<void> {
 		if (editingId.value) await gatewaysStore.update(editingId.value, input);
 		else await gatewaysStore.create(input);
 		goBack();
+	} catch (err) {
+		$q.notify({ type: 'negative', message: err instanceof Error ? err.message : t('common.saveFailed') });
 	} finally {
 		saving.value = false;
 	}

@@ -10,21 +10,11 @@ import { sim } from '@services/sim';
 
 /** LOCAL IMPORTS */
 import { createDevicesGetters } from './devices.getters';
-import { seedDevices } from './devices.seed';
 
 /**
- * Generate a local id for offline-created devices.
- * @returns {string} a unique id
- */
-function localId(): string {
-	const cryptoApi = globalThis.crypto;
-	const suffix = cryptoApi && typeof cryptoApi.randomUUID === 'function' ? cryptoApi.randomUUID() : Math.random().toString(36).slice(2);
-	return `dev-local-${suffix}`;
-}
-
-/**
- * Simulated devices. While the engine is offline, reads fall back to seed data
- * and writes are applied locally so the UI is fully usable in development.
+ * Devices backed by the engine over REST. Reads reflect the backend exactly
+ * (empty when it has none); writes go straight through and let failures surface
+ * to the caller. Engine-offline is shown globally via the sidecar health status.
  */
 export const useDevicesStore = defineStore('devices', () => {
 	/** STATE */
@@ -35,10 +25,9 @@ export const useDevicesStore = defineStore('devices', () => {
 	async function fetch(): Promise<void> {
 		loading.value = true;
 		try {
-			const data = await sim.devices.list();
-			items.value = Array.isArray(data) && data.length > 0 ? data : seedDevices();
+			items.value = await sim.devices.list();
 		} catch {
-			if (!items.value.length) items.value = seedDevices();
+			items.value = [];
 		} finally {
 			loading.value = false;
 		}
@@ -48,10 +37,6 @@ export const useDevicesStore = defineStore('devices', () => {
 		saving.value = true;
 		try {
 			const created = await sim.devices.create(input);
-			items.value = [...items.value, created];
-			return created;
-		} catch {
-			const created: Device = { id: localId(), created: new Date().toISOString(), ...input };
 			items.value = [...items.value, created];
 			return created;
 		} finally {
@@ -65,22 +50,13 @@ export const useDevicesStore = defineStore('devices', () => {
 			const updated = await sim.devices.update({ id }, input);
 			items.value = items.value.map((item) => (item.id === id ? updated : item));
 			return updated;
-		} catch {
-			const existing = items.value.find((item) => item.id === id);
-			const updated: Device = { id, created: existing?.created ?? new Date().toISOString(), ...input };
-			items.value = items.value.map((item) => (item.id === id ? updated : item));
-			return updated;
 		} finally {
 			saving.value = false;
 		}
 	}
 
 	async function remove(id: string): Promise<void> {
-		try {
-			await sim.devices.remove({ id });
-		} catch {
-			// Engine offline: fall through to a local removal.
-		}
+		await sim.devices.remove({ id });
 		items.value = items.value.filter((item) => item.id !== id);
 	}
 

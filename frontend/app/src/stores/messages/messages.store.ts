@@ -25,9 +25,8 @@ function nextId(): string {
 
 /**
  * The console message stream: every uplink, downlink and auth/join handshake
- * across all protocols. Fed by the engine over the websocket (when connected)
- * and by locally fired events; seeded with examples while the engine is offline
- * so the console conveys the flow.
+ * across all protocols, fed by the engine over the websocket. Empty until the
+ * engine emits frames; connection state is exposed via `connected`.
  */
 export const useMessagesStore = defineStore('messages', () => {
 	/** STATE */
@@ -66,55 +65,6 @@ export const useMessagesStore = defineStore('messages', () => {
 	}
 
 	/**
-	 * Load example messages spanning protocols, directions and handshakes so the
-	 * console is explorable before the engine is wired.
-	 */
-	function seedSamples(): void {
-		if (items.value.length) return;
-
-		const samples: Omit<ConsoleMessage, 'id'>[] = [
-			{
-				ts: '10:02:11', protocol: 'http', deviceId: 'dev-http-1', deviceName: 'HTTP sensor 01',
-				direction: 'up', kind: 'data', status: '200', summary: 'POST /v1/ingest',
-				payload: '{\n  "temperature": 21.5,\n  "humidity": 60,\n  "battery": 98\n}',
-				meta: { endpoint: '/v1/ingest', auth: 'X-API-Key' },
-			},
-			{
-				ts: '10:02:09', protocol: 'mqtt', deviceId: 'dev-mqtt-1', deviceName: 'MQTT sensor 01',
-				direction: 'system', kind: 'auth', status: 'OK', summary: 'CONNECT accepted (user/pass)',
-				payload: '{\n  "clientId": "dev-mqtt-1",\n  "username": "device",\n  "result": "authorized"\n}',
-				meta: { authType: 'basic', keepAlive: '60s' },
-			},
-			{
-				ts: '10:02:08', protocol: 'mqtt', deviceId: 'dev-mqtt-1', deviceName: 'MQTT sensor 01',
-				direction: 'up', kind: 'data', status: 'qos1', summary: 'PUBLISH telemetry/dev-mqtt-1',
-				payload: '{\n  "level": 0.72,\n  "flow": 12.4\n}',
-				meta: { topic: 'telemetry/dev-mqtt-1', qos: '1' },
-			},
-			{
-				ts: '10:02:07', protocol: 'mqtt', deviceId: 'dev-mqtt-1', deviceName: 'MQTT sensor 01',
-				direction: 'down', kind: 'downlink', status: 'sent', summary: 'command/dev-mqtt-1',
-				payload: '{\n  "cmd": "set-interval",\n  "seconds": 30\n}',
-				meta: { topic: 'command/dev-mqtt-1', qos: '1' },
-			},
-			{
-				ts: '10:02:03', protocol: 'lorawan', deviceId: 'sensor-1', deviceName: 'LoRa sensor 01',
-				direction: 'system', kind: 'join', status: 'accepted', summary: 'OTAA join-accept (1.0.3)',
-				payload: 'JoinAccept\n  DevAddr: 26 0B AC 12\n  DevEUI:  00 80 E1 15 00 12 34 56\n  MIC ok',
-				meta: { version: '1.0.3', gateway: 'gw-1', region: 'EU868' },
-			},
-			{
-				ts: '10:02:01', protocol: 'lorawan', deviceId: 'sensor-1', deviceName: 'LoRa sensor 01',
-				direction: 'up', kind: 'data', status: 'FCnt 14', summary: 'Uplink FPort 2',
-				payload: 'FRMPayload (decoded)\n{\n  "temp": 19.8,\n  "door": "closed"\n}\n\nraw: 01 8E 00',
-				meta: { fPort: '2', fCnt: '14', gateway: 'gw-1', rssi: '-87 dBm', snr: '9.2' },
-			},
-		];
-
-		for (const sample of samples) add(sample);
-	}
-
-	/**
 	 * Open the live console stream and append each frame the engine emits. Idempotent:
 	 * a second call while connected is a no-op. The engine assigns frame ids, so the
 	 * id is dropped and re-issued locally by `add`.
@@ -137,5 +87,5 @@ export const useMessagesStore = defineStore('messages', () => {
 
 	const getters = createMessagesGetters({ items, selectedId, deviceFilter });
 
-	return { items, selectedId, deviceFilter, connected, add, select, setDeviceFilter, clear, seedSamples, connect, disconnect, ...getters };
+	return { items, selectedId, deviceFilter, connected, add, select, setDeviceFilter, clear, connect, disconnect, ...getters };
 });
