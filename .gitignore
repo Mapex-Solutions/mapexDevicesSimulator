@@ -13,6 +13,9 @@ node_modules/
 .claude/settings.local.json
 .claude/worktrees/
 
+# Internal project notes and dev-only tooling (kept local, not shared)
+INTERNALS/
+
 # OS and log noise
 *.log
 .DS_Store
