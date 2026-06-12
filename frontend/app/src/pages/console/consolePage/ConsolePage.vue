@@ -10,7 +10,19 @@
 		<div class="console">
 			<!-- Devices -->
 			<aside class="console__devices">
-				<div class="console__pane-head">{{ t('console.devices') }}</div>
+				<div class="console__pane-head row items-center justify-between">
+					<span>{{ t('console.devices') }}</span>
+					<div class="row items-center q-gutter-xs">
+						<q-badge :color="onlineGateways ? 'positive' : 'grey-6'" text-color="white" class="console__stat">
+							<q-icon name="router" size="13px" class="q-mr-xs" />{{ pad(onlineGateways) }}
+							<AppTooltip :content="t('console.onlineGateways')" />
+						</q-badge>
+						<q-badge :color="onlineDevices ? 'positive' : 'grey-6'" text-color="white" class="console__stat">
+							<q-icon name="memory" size="13px" class="q-mr-xs" />{{ pad(onlineDevices) }}
+							<AppTooltip :content="t('console.onlineDevices')" />
+						</q-badge>
+					</div>
+				</div>
 
 				<div class="console__search row items-center no-wrap q-gutter-xs">
 					<q-input class="col" v-model="search" dense outlined hide-bottom-space :placeholder="t('console.searchDevices')" clearable>
@@ -184,12 +196,14 @@ import { statusColor } from '@utils/status-color';
 /** STORES */
 import { useAppStore } from '@stores/app';
 import { useDevicesStore } from '@stores/devices';
+import { useGatewaysStore } from '@stores/gateways';
 import { useMessagesStore } from '@stores/messages';
 
 /** COMPOSABLES & STORES */
 const { t } = useTranslations();
 const appStore = useAppStore();
 const devicesStore = useDevicesStore();
+const gatewaysStore = useGatewaysStore();
 const messagesStore = useMessagesStore();
 
 /** STATE */
@@ -248,7 +262,20 @@ const ordered = computed(() => {
 
 const activeFilterCount = computed(() => Object.values(filterValues.value).filter((value) => value.trim() !== '').length);
 
+// Online = enabled, since an enabled device/gateway holds a live session in the engine.
+const onlineDevices = computed(() => devicesStore.items.filter((device) => device.enabled).length);
+const onlineGateways = computed(() => gatewaysStore.items.filter((gateway) => gateway.enabled).length);
+
 /** FUNCTIONS */
+
+/**
+ * Zero-pad a count to two digits for the header stat badges.
+ * @param {number} value - the count
+ * @returns {string} the padded count
+ */
+function pad(value: number): string {
+	return String(value).padStart(2, '0');
+}
 
 /**
  * Icon for a message direction.
@@ -300,6 +327,7 @@ function openFire(deviceId: string): void {
 onMounted(() => {
 	void appStore.startHealthPolling();
 	void devicesStore.fetch();
+	void gatewaysStore.fetch();
 	messagesStore.connect();
 });
 
@@ -339,6 +367,12 @@ onUnmounted(() => {
 	font-size: var(--mapex-font-sm);
 	font-weight: var(--mapex-font-weight-semibold);
 	color: var(--mapex-text-primary);
+}
+
+.console__stat {
+	font-family: var(--mapex-mono-font);
+	font-weight: var(--mapex-font-weight-semibold);
+	padding: 3px 6px;
 }
 
 .console__devices {

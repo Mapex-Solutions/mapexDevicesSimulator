@@ -29,6 +29,8 @@ export default {
 		devices: 'Devices',
 		allDevices: 'All devices',
 		searchDevices: 'Search devices',
+		onlineDevices: 'Online devices',
+		onlineGateways: 'Online gateways',
 		emptyDevices: 'No devices yet',
 		emptyLog: 'No messages yet. Fire an event or start a run to see traffic.',
 		fireEvent: 'Fire event',
