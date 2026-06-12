@@ -163,3 +163,14 @@ export const PROTOCOL_REGISTRY: Partial<Record<ProtocolId, ProtocolDefinition>> 
  */
 export const ENABLED_PROTOCOLS: ProtocolDefinition[] = Object.values(PROTOCOL_REGISTRY)
 	.filter((def): def is ProtocolDefinition => Boolean(def?.enabled));
+
+/**
+ * Canonical icon for a protocol — the single source used everywhere (menu, list
+ * pages, console) so the same protocol always shows the same icon. Falls back to
+ * a neutral chip icon for an unknown id.
+ * @param {ProtocolId} id - the protocol id
+ * @returns {string} the icon name
+ */
+export function protocolIcon(id: ProtocolId): string {
+	return PROTOCOL_REGISTRY[id]?.icon ?? 'mdi-chip';
+}

@@ -184,6 +184,7 @@ import { DataRow } from '@components/DataRow';
 import { ListCardEmpty } from '@components/ListCardEmpty';
 import { AdvancedFiltersDrawer } from '@components/AdvancedFiltersDrawer';
 import { AppTooltip } from '@components/AppTooltip';
+import { protocolIcon } from '@components/protocols/ProtocolRegistry';
 
 /** COMPOSABLES */
 import { useTranslations } from '@composables/i18n';
@@ -192,12 +193,6 @@ import { useTranslations } from '@composables/i18n';
 import { useLogsStore } from '@stores/logs';
 
 const MAX_VISIBLE_CHIPS = 2;
-const PROTOCOL_ICON: Record<string, string> = {
-	http: 'mdi-web',
-	mqtt: 'mdi-transit-connection-variant',
-	lorawan: 'mdi-access-point',
-	basicstation: 'mdi-radio-tower',
-};
 
 /** COMPOSABLES & STORES */
 const { t } = useTranslations();
@@ -268,7 +263,7 @@ const menuColumns = computed<ListHeaderMenuColumn[]>(() => [
 ]);
 
 const logColumns = computed<DataRowColumn[]>(() => [
-	{ key: 'icon', label: '', type: 'avatar', visible: 'always', width: 72, icon: (_v, row) => PROTOCOL_ICON[row.protocol] ?? 'mdi-chip', color: () => 'primary', tooltip: (_v, row) => t(`protocol.${row.protocol}`) },
+	{ key: 'icon', label: '', type: 'avatar', visible: 'always', width: 72, icon: (_v, row) => protocolIcon(row.protocol), color: () => 'primary', tooltip: (_v, row) => t(`protocol.${row.protocol}`) },
 	{ key: 'deviceName', label: t('logs.col.device'), type: 'text', visible: 'always', width: 200, ellipsis: true, secondaryKey: 'deviceId' },
 	{ key: 'protocol', label: t('logs.col.protocol'), type: 'chip', visible: 'laptop', width: 130, format: (v) => t(`protocol.${v}`) },
 	{ key: 'direction', label: t('logs.col.direction'), type: 'chip', visible: 'laptop', width: 120, format: (v) => dirLabel(v as LogDirection), color: (v) => dirColor(v as LogDirection) },

@@ -170,6 +170,7 @@ import { FireEventDialog } from '@components/FireEventDialog';
 import { GenericDrawer } from '@components/GenericDrawer';
 import { GenericModal } from '@components/GenericModal';
 import { PageHeader } from '@components/PageHeader';
+import { protocolIcon } from '@components/protocols/ProtocolRegistry';
 import { MessageDetail } from './components/MessageDetail';
 import { MessageFilterBar } from './components/MessageFilterBar';
 
@@ -248,17 +249,6 @@ const ordered = computed(() => {
 const activeFilterCount = computed(() => Object.values(filterValues.value).filter((value) => value.trim() !== '').length);
 
 /** FUNCTIONS */
-
-/**
- * Icon for a protocol.
- * @param {ProtocolId} protocol - the protocol id
- */
-function protocolIcon(protocol: ProtocolId): string {
-	if (protocol === 'http') return 'mdi-web';
-	if (protocol === 'mqtt') return 'mdi-transit-connection-variant';
-	if (protocol === 'lorawan') return 'mdi-radio-tower';
-	return 'mdi-access-point';
-}
 
 /**
  * Icon for a message direction.

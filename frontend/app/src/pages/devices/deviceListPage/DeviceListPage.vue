@@ -76,6 +76,7 @@ import { PageHeader } from '@components/PageHeader';
 import { ListHeaderMenu } from '@components/ListHeaderMenu';
 import { DataRow } from '@components/DataRow';
 import { ListCardEmpty } from '@components/ListCardEmpty';
+import { protocolIcon } from '@components/protocols/ProtocolRegistry';
 
 /** COMPOSABLES */
 import { useTranslations } from '@composables/i18n';
@@ -96,13 +97,6 @@ const route = useRoute();
 const router = useRouter();
 const devicesStore = useDevicesStore();
 
-const PROTOCOL_ICON: Record<string, string> = {
-	http: 'mdi-web',
-	mqtt: 'mdi-transit-connection-variant',
-	lorawan: 'mdi-access-point',
-	basicstation: 'mdi-radio-tower',
-};
-
 /** STATE */
 const columnVisibility = ref({ protocol: true, target: true, events: true, created: true, status: true });
 
@@ -122,7 +116,7 @@ const menuColumns = computed<ListHeaderMenuColumn[]>(() => [
 ]);
 
 const deviceColumns = computed<DataRowColumn[]>(() => [
-	{ key: 'icon', label: '', type: 'avatar', visible: 'always', width: 72, icon: (_v, row) => PROTOCOL_ICON[row.protocolId] ?? 'mdi-chip', color: () => 'primary', tooltip: (_v, row) => t(`protocol.${row.protocolId}`) },
+	{ key: 'icon', label: '', type: 'avatar', visible: 'always', width: 72, icon: (_v, row) => protocolIcon(row.protocolId), color: () => 'primary', tooltip: (_v, row) => t(`protocol.${row.protocolId}`) },
 	{ key: 'name', label: t('devices.col.name'), type: 'text', visible: 'always', width: 240, ellipsis: true, secondaryKey: 'deviceId' },
 	{ key: 'protocolId', label: t('devices.col.protocol'), type: 'chip', visible: 'laptop', width: 120, format: (v) => t(`protocol.${v}`), color: () => 'primary' },
 	{ key: 'config', label: t('devices.col.target'), type: 'text', visible: 'laptop', ellipsis: true, format: (_v, row) => targetOf(row) },
