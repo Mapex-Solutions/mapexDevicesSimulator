@@ -119,11 +119,19 @@ func (s *EngineService) buildRequest(spec sendSpec, payload string, counter int6
 }
 
 // report streams a console frame (always) and persists a log (when storeLogs).
+//
+// A failed send (a transport error from the dispatcher or the live session: the
+// broker is unreachable, auth was rejected, the request timed out) is reported as
+// an "error" frame whose Response carries the reason, so the user sees not just
+// that the send failed but why. A non-2xx HTTP reply is not an error here: it keeps
+// its status code and response body.
 func (s *EngineService) report(spec sendSpec, payload, summary string, res enginePorts.DispatchResult) {
 	now := time.Now().UTC().Format(time.RFC3339)
 	status := res.Status
+	response := res.Response
 	if !res.OK && res.Err != nil {
 		status = "error"
+		response = res.Err.Error()
 	}
 
 	s.deps.Console.Publish(consoleDtos.ConsoleMessage{
@@ -136,7 +144,7 @@ func (s *EngineService) report(spec sendSpec, payload, summary string, res engin
 		Kind:       "data",
 		Summary:    summary,
 		Payload:    payload,
-		Response:   res.Response,
+		Response:   response,
 		Status:     status,
 	})
 

@@ -105,6 +105,38 @@ func TestEngine_FireOfflineGatewayReportsStatus(t *testing.T) {
 	}
 }
 
+// A send that fails at the transport layer (here an HTTP device whose target is
+// unreachable) must still reach the console as an "error" frame carrying the
+// failure reason in Response, so the user sees not just that it failed but why.
+func TestEngine_FireReportsSendError(t *testing.T) {
+	pub := &fakePublisher{}
+	eng := New(di.EngineServiceDI{
+		Devices:    &fakeDevices{list: []devicesDtos.Device{fireHTTPDevice("http://127.0.0.1:1/x")}},
+		Logs:       &fakeLogWriter{},
+		Console:    pub,
+		Registry:   dispatch.NewRegistry(),
+		Connectors: session.NewConnectorRegistry(),
+		Reconcile:  reconcile.New(),
+	})
+	eng.OnMount()
+	defer eng.OnShutdown(context.Background())
+
+	if err := eng.Fire(context.Background(), "d1", enginePorts.FireInput{EventID: "e1"}); err != nil {
+		t.Fatalf("fire should not error at the API level, got %v", err)
+	}
+
+	m, ok := pub.firstWithStatus("error")
+	if !ok {
+		t.Fatal("a failed send must stream an error frame to the console")
+	}
+	if m.Direction != "up" || m.Kind != "data" {
+		t.Fatalf("error frame should be an up/data frame, got %s/%s", m.Direction, m.Kind)
+	}
+	if m.Response == "" {
+		t.Fatal("the error frame must carry the failure reason in Response")
+	}
+}
+
 func TestEngine_FireUnknownDeviceAndEvent(t *testing.T) {
 	eng := New(di.EngineServiceDI{
 		Devices:    &fakeDevices{list: []devicesDtos.Device{fireHTTPDevice("http://x")}},

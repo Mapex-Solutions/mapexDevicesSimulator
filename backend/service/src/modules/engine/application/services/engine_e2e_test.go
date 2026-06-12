@@ -71,6 +71,16 @@ func (f *fakePublisher) has(direction, kind, status string) bool {
 	}
 	return false
 }
+func (f *fakePublisher) firstWithStatus(status string) (consoleDtos.ConsoleMessage, bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, m := range f.msgs {
+		if m.Status == status {
+			return m, true
+		}
+	}
+	return consoleDtos.ConsoleMessage{}, false
+}
 
 var _ consolePorts.Publisher = (*fakePublisher)(nil)
 
