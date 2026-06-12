@@ -119,7 +119,7 @@ const deviceColumns = computed<DataRowColumn[]>(() => [
 	{ key: 'icon', label: '', type: 'avatar', visible: 'always', width: 72, icon: (_v, row) => protocolIcon(row.protocolId), color: () => 'primary', tooltip: (_v, row) => t(`protocol.${row.protocolId}`) },
 	{ key: 'name', label: t('devices.col.name'), type: 'text', visible: 'always', width: 240, ellipsis: true, secondaryKey: 'deviceId' },
 	{ key: 'protocolId', label: t('devices.col.protocol'), type: 'chip', visible: 'laptop', width: 120, format: (v) => t(`protocol.${v}`), color: () => 'primary' },
-	{ key: 'config', label: t('devices.col.target'), type: 'text', visible: 'laptop', ellipsis: true, format: (_v, row) => targetOf(row) },
+	{ key: 'config', label: t('devices.col.target'), type: 'text', visible: 'laptop', width: 240, ellipsis: true, format: (_v, row) => targetOf(row) },
 	{ key: 'events', label: t('devices.col.events'), type: 'badge', visible: 'laptop', width: 90, format: (v) => String((v as unknown[])?.length ?? 0), color: () => 'primary' },
 	{ key: 'enabled', label: t('devices.col.status'), type: 'chip', visible: 'always', width: 110, format: (v) => (v ? t('devices.on') : t('devices.off')), color: (v) => (v ? 'positive' : 'grey') },
 	{ key: 'created', label: t('devices.col.created'), type: 'text', visible: 'laptop', width: 130, format: (v) => formatDate(v as string) },
