@@ -257,7 +257,7 @@ function getChildIcon(child: MenuItem): string {
 
   .regular-menu-item, :deep(.menu-parent-item) {
     border-radius: 0 var(--mapex-radius-md) var(--mapex-radius-md) 0;
-    margin: 4px 0;
+    margin: var(--mapex-spacing-xs) 0;
     transition: var(--mapex-transition-base);
 
     &:hover {
@@ -278,7 +278,7 @@ function getChildIcon(child: MenuItem): string {
   }
 
   .mini-menu-item {
-    padding: 8px 0;
+    padding: var(--mapex-spacing-sm) 0;
     justify-content: center;
 
     .q-item__section--avatar {
@@ -289,7 +289,7 @@ function getChildIcon(child: MenuItem): string {
   }
 
   .mini-regular-item {
-    padding: 12px 0;
+    padding: var(--mapex-spacing-md) 0;
     justify-content: center;
 
     .q-item__section--avatar {
@@ -309,14 +309,14 @@ function getChildIcon(child: MenuItem): string {
 
 // Submenu styling
 .submenu-list {
-  padding-left: 16px !important;
+  padding-left: var(--mapex-spacing-lg) !important;
   background: var(--mapex-submenu-bg);
 
   .q-item {
-    padding: 8px 16px;
+    padding: var(--mapex-spacing-sm) var(--mapex-spacing-lg);
     min-height: 40px;
     border-radius: 0 var(--mapex-radius-md) var(--mapex-radius-md) 0;
-    margin: 2px 0;
+    margin: var(--mapex-spacing-2xs) 0;
 
     &:hover {
       background: rgba(var(--q-primary-rgb), 0.05);

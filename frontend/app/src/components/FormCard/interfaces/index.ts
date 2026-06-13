@@ -1,1 +1,1 @@
-export * from './formCard.interface';
+export type * from './formCard.interface';

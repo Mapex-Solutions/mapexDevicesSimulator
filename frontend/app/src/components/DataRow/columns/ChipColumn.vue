@@ -19,26 +19,26 @@
 </template>
 
 <script setup lang="ts">
+/** TYPE IMPORTS */
+import type { DataRowColumnProps } from '../interfaces';
+
+/** VUE IMPORTS */
+import { computed } from 'vue';
+
+/** COMPONENTS */
+import { AppTooltip } from '@components/AppTooltip';
+
 defineOptions({
   name: 'ChipColumn'
 });
 
-import { computed } from 'vue';
-import type { DataRowColumn } from '../interfaces';
-import { AppTooltip } from '@components/AppTooltip';
-
-const props = defineProps<{
-  value: any;
-  column: DataRowColumn;
-  row: any;
-  mobile?: boolean;
-}>();
+const props = defineProps<DataRowColumnProps>();
 
 const displayValue = computed(() => {
   if (props.column.format) {
     return props.column.format(props.value, props.row);
   }
-  return props.value || 'N/A';
+  return (props.value as string) || 'N/A';
 });
 
 const secondaryText = computed(() => {

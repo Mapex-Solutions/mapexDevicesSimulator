@@ -1,1 +1,1 @@
-export * from './genericDrawer.interface';
+export type * from './genericDrawer.interface';

@@ -161,7 +161,7 @@ async function copy(text: string): Promise<void> {
 		display: flex;
 		justify-content: space-between;
 		gap: var(--mapex-spacing-md);
-		padding: 4px 0;
+		padding: var(--mapex-spacing-xs) 0;
 		border-bottom: 1px solid var(--mapex-divider);
 		font-size: var(--mapex-font-sm);
 	}

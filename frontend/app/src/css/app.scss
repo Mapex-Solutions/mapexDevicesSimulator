@@ -48,6 +48,15 @@ body.body--light {
   --mapex-danger-active:      rgba(255, 77, 79, 0.15);
   --mapex-danger-border:      rgba(255, 77, 79, 0.25);
 
+  // Brand accents (splash gradient, on-brand text, footer heart)
+  --mapex-heart:              #E25555;
+  --mapex-brand-grad-from:    #2F5D50;
+  --mapex-brand-grad-mid:     #3B6D5E;
+  --mapex-brand-grad-to:      #4C8A74;
+  --mapex-on-brand:           #FFFFFF;
+  --mapex-on-brand-muted:     rgba(255, 255, 255, 0.85);
+  --mapex-on-brand-subtle:    rgba(255, 255, 255, 0.7);
+
   // Quasar overrides
   --q-negative:               #C10015;
 
@@ -163,6 +172,15 @@ body.body--dark {
   --mapex-danger-hover:       rgba(255, 77, 79, 0.14);
   --mapex-danger-active:      rgba(255, 77, 79, 0.25);
   --mapex-danger-border:      rgba(255, 77, 79, 0.35);
+
+  // Brand accents (splash gradient, on-brand text, footer heart)
+  --mapex-heart:              #E25555;
+  --mapex-brand-grad-from:    #2F5D50;
+  --mapex-brand-grad-mid:     #3B6D5E;
+  --mapex-brand-grad-to:      #4C8A74;
+  --mapex-on-brand:           #FFFFFF;
+  --mapex-on-brand-muted:     rgba(255, 255, 255, 0.85);
+  --mapex-on-brand-subtle:    rgba(255, 255, 255, 0.7);
 
   // Quasar dark mode alignment
   --q-dark-page:              #1B2530;

@@ -164,11 +164,11 @@ body {
 .app-footer__made {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--mapex-spacing-xs);
 }
 
 .app-footer__heart {
-  color: #e25555;
+  color: var(--mapex-heart);
   animation: footer-heart 1.6s ease-in-out infinite;
 }
 

@@ -1,1 +1,1 @@
-export * from './advancedFiltersDrawer.interface';
+export type * from './advancedFiltersDrawer.interface';

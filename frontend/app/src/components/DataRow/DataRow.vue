@@ -301,13 +301,18 @@
 </template>
 
 <script setup lang="ts">
+/** TYPE IMPORTS */
+import type { DataRowProps, DataRowEmits, DataRowColumn } from './interfaces';
+
+/** VUE IMPORTS */
+import { ref, computed } from 'vue';
+
+/** COMPONENTS */
+import { AvatarColumn, TextColumn, CodeColumn, ChipColumn, ChipsColumn, BadgeColumn } from './columns';
+
 defineOptions({
   name: 'DataRow'
 });
-
-import { ref, computed } from 'vue';
-import type { DataRowProps, DataRowEmits, DataRowColumn } from './interfaces';
-import { AvatarColumn, TextColumn, CodeColumn, ChipColumn, ChipsColumn, BadgeColumn } from './columns';
 
 /** CONSTANTS */
 const CLICK_DELAY_MS = 250;
@@ -541,7 +546,7 @@ function toggleMobileExpand() {
   background: var(--mapex-surface-bg);
   border: 1px solid var(--mapex-card-border);
   border-radius: var(--mapex-radius-xs);
-  margin-bottom: 8px;
+  margin-bottom: var(--mapex-spacing-sm);
   transition: var(--mapex-transition-base);
   cursor: pointer;
 }
@@ -552,16 +557,16 @@ function toggleMobileExpand() {
 }
 
 :deep(.data-row-card td) {
-  padding: 16px 8px;
+  padding: var(--mapex-spacing-lg) var(--mapex-spacing-sm);
   vertical-align: middle;
 }
 
 :deep(.data-row-card td:first-child) {
-  padding-left: 16px;
+  padding-left: var(--mapex-spacing-lg);
 }
 
 :deep(.data-row-card td:last-child) {
-  padding-right: 8px;
+  padding-right: var(--mapex-spacing-sm);
 }
 
 // Column cells
@@ -580,7 +585,7 @@ function toggleMobileExpand() {
   max-width: 56px !important;
   min-width: 56px !important;
   text-align: right !important;
-  padding-right: 16px !important;
+  padding-right: var(--mapex-spacing-lg) !important;
 }
 
 // Expanded area
@@ -590,7 +595,7 @@ function toggleMobileExpand() {
 }
 
 :deep(.data-row-expanded td) {
-  padding: 16px;
+  padding: var(--mapex-spacing-lg);
 }
 
 // Mobile version (< 600px)
@@ -649,7 +654,7 @@ function toggleMobileExpand() {
 
     .q-item__section--side {
       min-width: 32px;
-      padding-right: 12px;
+      padding-right: var(--mapex-spacing-md);
     }
   }
 

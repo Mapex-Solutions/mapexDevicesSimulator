@@ -1,1 +1,1 @@
-export * from './listHeaderMenu.interface';
+export type * from './listHeaderMenu.interface';

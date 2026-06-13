@@ -1,5 +1,5 @@
 <template>
-  <div style="min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+  <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--mapex-spacing-2xs);">
     <!-- Primary Text -->
     <div
         :class="props.column.ellipsis ? 'ellipsis' : ''"
@@ -23,26 +23,26 @@
 </template>
 
 <script setup lang="ts">
+/** TYPE IMPORTS */
+import type { DataRowColumnProps } from '../interfaces';
+
+/** VUE IMPORTS */
+import { computed } from 'vue';
+
+/** COMPONENTS */
+import { AppTooltip } from '@components/AppTooltip';
+
 defineOptions({
   name: 'TextColumn'
 });
 
-import { computed } from 'vue';
-import type { DataRowColumn } from '../interfaces';
-import { AppTooltip } from '@components/AppTooltip';
-
-const props = defineProps<{
-  value: any;
-  column: DataRowColumn;
-  row: any;
-  mobile?: boolean;
-}>();
+const props = defineProps<DataRowColumnProps>();
 
 const displayValue = computed(() => {
   if (props.column.format) {
     return props.column.format(props.value, props.row);
   }
-  return props.value || '-';
+  return (props.value as string) || '-';
 });
 
 const secondaryValue = computed(() => {
@@ -54,13 +54,13 @@ const secondaryValue = computed(() => {
   // Support secondaryKey as property path
   if (props.column.secondaryKey) {
     const keys = props.column.secondaryKey.split('.');
-    let value = props.row;
+    let value: unknown = props.row;
 
     for (const key of keys) {
-      value = value?.[key];
+      value = (value as Record<string, unknown> | undefined)?.[key];
     }
 
-    return value || null;
+    return (value as string) || null;
   }
 
   return null;

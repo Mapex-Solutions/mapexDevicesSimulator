@@ -1,1 +1,1 @@
-export * from './listCardEmpty.interface';
+export type * from './listCardEmpty.interface';

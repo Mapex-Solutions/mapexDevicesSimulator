@@ -1,1 +1,1 @@
-export * from './appTooltip.interface';
+export type * from './appTooltip.interface';

@@ -19,19 +19,17 @@
 </template>
 
 <script setup lang="ts">
+/** TYPE IMPORTS */
+import type { DataRowColumnProps } from '../interfaces';
+
+/** COMPONENTS */
+import { AppTooltip } from '@components/AppTooltip';
+
 defineOptions({
   name: 'AvatarColumn'
 });
 
-import type { DataRowColumn } from '../interfaces';
-import { AppTooltip } from '@components/AppTooltip';
-
-const props = defineProps<{
-  value: any;
-  column: DataRowColumn;
-  row: any;
-  mobile?: boolean;
-}>();
+const props = defineProps<DataRowColumnProps>();
 
 function getIcon() {
   if (typeof props.column.icon === 'function') {

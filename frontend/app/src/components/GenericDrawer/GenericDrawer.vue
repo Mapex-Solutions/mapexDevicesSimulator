@@ -170,8 +170,8 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: var(--mapex-spacing-sm);
+  padding: var(--mapex-spacing-md) var(--mapex-spacing-lg);
   background: var(--mapex-header-bg);
   backdrop-filter: blur(10px);
   border-top: 1px solid var(--mapex-header-border);

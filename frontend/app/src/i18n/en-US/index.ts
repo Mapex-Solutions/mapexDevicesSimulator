@@ -178,6 +178,7 @@ export default {
 	},
 	pageHeader: {
 		infoTooltip: 'More information',
+		tour: 'Tour',
 	},
 	fireEvent: {
 		title: 'Fire event',

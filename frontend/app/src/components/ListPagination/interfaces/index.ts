@@ -1,1 +1,1 @@
-export * from './listPagination.interface';
+export type * from './listPagination.interface';

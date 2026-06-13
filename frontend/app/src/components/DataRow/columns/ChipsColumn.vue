@@ -64,21 +64,21 @@
 </template>
 
 <script setup lang="ts">
+/** TYPE IMPORTS */
+import type { DataRowColumnProps } from '../interfaces';
+
+/** VUE IMPORTS */
+import { ref, computed } from 'vue';
+
+/** COMPONENTS */
+import { AppTooltip } from '@components/AppTooltip';
+
 defineOptions({
   name: 'ChipsColumn'
 });
 
-import { ref, computed } from 'vue';
-import type { DataRowColumn } from '../interfaces';
-import { AppTooltip } from '@components/AppTooltip';
-
 /** PROPS */
-const props = withDefaults(defineProps<{
-  value: any;
-  column: DataRowColumn;
-  row: any;
-  mobile?: boolean;
-}>(), {
+const props = withDefaults(defineProps<DataRowColumnProps>(), {
   mobile: false,
 });
 

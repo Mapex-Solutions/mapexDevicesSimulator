@@ -1,1 +1,1 @@
-export * from './infoModal.interface';
+export type * from './infoModal.interface';

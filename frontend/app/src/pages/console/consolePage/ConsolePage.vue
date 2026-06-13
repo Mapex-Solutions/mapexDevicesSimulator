@@ -378,7 +378,7 @@ onUnmounted(() => {
 .console__stat {
 	font-family: var(--mapex-mono-font);
 	font-weight: var(--mapex-font-weight-semibold);
-	padding: 3px 6px;
+	padding: var(--mapex-spacing-2xs) var(--mapex-spacing-xs);
 }
 
 .console__devices {

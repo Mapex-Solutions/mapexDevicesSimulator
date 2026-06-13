@@ -377,8 +377,8 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 // Filter field group
 .filter-field {
-  padding-bottom: 20px;
-  margin-bottom: 20px;
+  padding-bottom: var(--mapex-spacing-xl);
+  margin-bottom: var(--mapex-spacing-xl);
   border-bottom: 1px solid var(--mapex-divider);
 
   &--last {
@@ -394,7 +394,7 @@ onBeforeUnmount(() => {
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--mapex-text-secondary);
-    margin-bottom: 12px;
+    margin-bottom: var(--mapex-spacing-md);
     letter-spacing: 0.01em;
   }
 }

@@ -1,1 +1,1 @@
-export * from './stepperVertical.interface';
+export type * from './stepperVertical.interface';

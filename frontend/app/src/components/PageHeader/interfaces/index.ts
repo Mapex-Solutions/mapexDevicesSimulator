@@ -1,1 +1,1 @@
-export * from './pageHeader.interface';
+export type * from './pageHeader.interface';

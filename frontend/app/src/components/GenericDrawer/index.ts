@@ -1,2 +1,2 @@
 export { default as GenericDrawer } from './GenericDrawer.vue';
-export * from './interfaces';
+export type * from './interfaces';

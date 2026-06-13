@@ -193,14 +193,14 @@ const handleStepClick = (stepNumber: number): void => {
 .progress-steps {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--mapex-spacing-lg);
 }
 
 .step-item {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 8px 0;
+  gap: var(--mapex-spacing-md);
+  padding: var(--mapex-spacing-sm) 0;
   position: relative;
 }
 
@@ -266,25 +266,25 @@ const handleStepClick = (stepNumber: number): void => {
 
 .step-content {
   flex: 1;
-  padding-top: 2px;
+  padding-top: var(--mapex-spacing-2xs);
 }
 
 .step-title {
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--mapex-font-md);
   color: var(--mapex-text-primary);
-  margin-bottom: 4px;
+  margin-bottom: var(--mapex-spacing-xs);
 }
 
 .step-description {
-  font-size: 12px;
+  font-size: var(--mapex-font-xs);
   color: var(--mapex-text-secondary);
   line-height: 1.4;
 }
 
 .current-step-info {
   background-color: var(--mapex-surface-elevated);
-  padding: 12px;
+  padding: var(--mapex-spacing-md);
   border-radius: var(--mapex-radius-sm);
   border-left: 3px solid var(--q-primary);
 }

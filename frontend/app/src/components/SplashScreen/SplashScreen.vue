@@ -58,7 +58,7 @@ onMounted(() => {
 	align-items: center;
 	justify-content: center;
 	overflow: hidden;
-	background: linear-gradient(150deg, #2f5d50 0%, #3b6d5e 45%, #4c8a74 100%);
+	background: linear-gradient(150deg, var(--mapex-brand-grad-from) 0%, var(--mapex-brand-grad-mid) 45%, var(--mapex-brand-grad-to) 100%);
 }
 
 .splash__watermark {
@@ -83,7 +83,7 @@ onMounted(() => {
 	width: 132px;
 	height: 132px;
 	border-radius: 30px;
-	background: #ffffff;
+	background: var(--mapex-on-brand);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -95,14 +95,14 @@ onMounted(() => {
 	margin: var(--mapex-spacing-sm) 0 0;
 	font-size: 1.6rem;
 	font-weight: var(--mapex-font-weight-semibold);
-	color: #ffffff;
+	color: var(--mapex-on-brand);
 	letter-spacing: 0.3px;
 }
 
 .splash__tagline {
 	margin: 0;
 	max-width: 360px;
-	color: rgba(255, 255, 255, 0.85);
+	color: var(--mapex-on-brand-muted);
 	font-size: var(--mapex-font-md);
 }
 
@@ -112,7 +112,7 @@ onMounted(() => {
 }
 
 .splash__loading {
-	color: rgba(255, 255, 255, 0.7);
+	color: var(--mapex-on-brand-subtle);
 	font-size: var(--mapex-font-xs);
 	letter-spacing: 0.4px;
 	text-transform: uppercase;

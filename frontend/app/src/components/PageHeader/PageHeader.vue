@@ -82,7 +82,7 @@ function handleStartTour(): void {
               dense
               size="sm"
               icon="play_circle_outline"
-              label="Tour"
+              :label="t('pageHeader.tour')"
               color="primary"
               class="tour-button"
               no-caps
