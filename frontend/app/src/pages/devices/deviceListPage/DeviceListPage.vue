@@ -42,9 +42,10 @@
 				<DataRow
 					:data="device"
 					:columns="visibleColumns"
-					:actions="{ showView: false }"
+					:actions="rowActions"
 					@edit="openEdit"
 					@delete="onDelete"
+					@action="onAction"
 				/>
 			</div>
 
@@ -64,8 +65,8 @@
 
 <script setup lang="ts">
 /** TYPE IMPORTS */
-import type { Device } from '@services/sim';
-import type { DataRowColumn } from '@components/DataRow';
+import type { Device, DeviceInput } from '@services/sim';
+import type { DataRowColumn, DataRowActionConfig } from '@components/DataRow';
 import type { ListHeaderMenuColumn } from '@components/ListHeaderMenu';
 
 /** VUE IMPORTS */
@@ -136,6 +137,11 @@ const visibleColumns = computed(() =>
 	}),
 );
 
+const rowActions = computed<DataRowActionConfig>(() => ({
+	showView: false,
+	customActions: [{ key: 'duplicate', label: t('common.duplicate'), icon: 'content_copy' }],
+}));
+
 /** FUNCTIONS */
 
 /**
@@ -186,6 +192,43 @@ function openCreate(): void {
  */
 function openEdit(device: Device): void {
 	void router.push({ name: 'device-edit', params: { id: device.id } });
+}
+
+/**
+ * Handle a custom row action.
+ * @param {string} key - the action key
+ * @param {Device} device - the row's device
+ */
+function onAction(key: string, device: Device): void {
+	if (key === 'duplicate') void duplicateDevice(device);
+}
+
+/**
+ * Duplicate a device through the create endpoint, copying every field and only
+ * renaming the copy. The suffix follows the language active at the moment of the
+ * action.
+ * @param {Device} device - the device to duplicate
+ */
+async function duplicateDevice(device: Device): Promise<void> {
+	// Deep-clone through JSON: the row comes from the reactive store, so its nested
+	// config/events are Vue proxies that structuredClone rejects; a DTO is plain JSON.
+	const source = JSON.parse(JSON.stringify(device)) as Device;
+	const input: DeviceInput = {
+		name: t('common.duplicateName', { name: device.name }),
+		deviceId: source.deviceId,
+		protocolId: source.protocolId,
+		enabled: source.enabled,
+		storeLogs: source.storeLogs,
+		config: source.config,
+		attributes: source.attributes,
+		events: source.events,
+	};
+	try {
+		await devicesStore.create(input);
+		$q.notify({ type: 'positive', message: t('common.duplicated') });
+	} catch {
+		$q.notify({ type: 'negative', message: t('common.saveFailed') });
+	}
 }
 
 /**

@@ -42,9 +42,10 @@
 				<DataRow
 					:data="gateway"
 					:columns="visibleColumns"
-					:actions="{ showView: false }"
+					:actions="rowActions"
 					@edit="openEdit"
 					@delete="onDelete"
+					@action="onAction"
 				/>
 			</div>
 
@@ -64,8 +65,8 @@
 
 <script setup lang="ts">
 /** TYPE IMPORTS */
-import type { Gateway } from '@services/sim';
-import type { DataRowColumn } from '@components/DataRow';
+import type { Gateway, GatewayInput } from '@services/sim';
+import type { DataRowColumn, DataRowActionConfig } from '@components/DataRow';
 import type { ListHeaderMenuColumn } from '@components/ListHeaderMenu';
 
 /** VUE IMPORTS */
@@ -146,6 +147,11 @@ const visibleColumns = computed(() =>
 	}),
 );
 
+const rowActions = computed<DataRowActionConfig>(() => ({
+	showView: false,
+	customActions: [{ key: 'duplicate', label: t('common.duplicate'), icon: 'content_copy' }],
+}));
+
 /** FUNCTIONS */
 
 /**
@@ -192,6 +198,41 @@ function openCreate(): void {
  */
 function openEdit(gateway: Gateway): void {
 	void router.push({ name: 'gateway-edit', params: { id: gateway.id } });
+}
+
+/**
+ * Handle a custom row action.
+ * @param {string} key - the action key
+ * @param {Gateway} gateway - the row's gateway
+ */
+function onAction(key: string, gateway: Gateway): void {
+	if (key === 'duplicate') void duplicateGateway(gateway);
+}
+
+/**
+ * Duplicate a gateway through the create endpoint, copying every field and only
+ * renaming the copy. The suffix follows the language active at the moment of the
+ * action.
+ * @param {Gateway} gateway - the gateway to duplicate
+ */
+async function duplicateGateway(gateway: Gateway): Promise<void> {
+	// Deep-clone through JSON: the row comes from the reactive store, so its nested
+	// link is a Vue proxy that structuredClone rejects; a DTO is plain JSON.
+	const source = JSON.parse(JSON.stringify(gateway)) as Gateway;
+	const input: GatewayInput = {
+		name: t('common.duplicateName', { name: gateway.name }),
+		eui: source.eui,
+		enabled: source.enabled,
+		region: source.region,
+		description: source.description,
+		link: source.link,
+	};
+	try {
+		await gatewaysStore.create(input);
+		$q.notify({ type: 'positive', message: t('common.duplicated') });
+	} catch {
+		$q.notify({ type: 'negative', message: t('common.saveFailed') });
+	}
 }
 
 /**
