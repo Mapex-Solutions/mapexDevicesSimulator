@@ -147,6 +147,16 @@ export default {
 		clearAll: 'Clear all',
 		advancedFilters: 'Advanced filters',
 		pendingFilters: 'Apply pending filters',
+		previous: 'Previous',
+		next: 'Next',
+		filter: {
+			device: 'Device',
+			devicePlaceholder: 'Search a device',
+			event: 'Event name',
+			eventPlaceholder: 'Filter by event name',
+			dateFrom: 'From',
+			dateTo: 'To',
+		},
 		col: {
 			time: 'Time',
 			direction: 'Direction',

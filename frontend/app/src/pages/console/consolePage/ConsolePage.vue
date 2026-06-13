@@ -183,7 +183,7 @@ import { GenericDrawer } from '@components/GenericDrawer';
 import { GenericModal } from '@components/GenericModal';
 import { PageHeader } from '@components/PageHeader';
 import { protocolIcon } from '@components/protocols/ProtocolRegistry';
-import { MessageDetail } from './components/MessageDetail';
+import { MessageDetail } from '@components/MessageDetail';
 import { MessageFilterBar } from './components/MessageFilterBar';
 
 /** COMPOSABLES */

@@ -147,6 +147,16 @@ export default {
 		clearAll: 'Limpar tudo',
 		advancedFilters: 'Filtros avançados',
 		pendingFilters: 'Aplicar filtros pendentes',
+		previous: 'Anterior',
+		next: 'Próximo',
+		filter: {
+			device: 'Dispositivo',
+			devicePlaceholder: 'Buscar um dispositivo',
+			event: 'Nome do evento',
+			eventPlaceholder: 'Filtrar por nome do evento',
+			dateFrom: 'De',
+			dateTo: 'Até',
+		},
 		col: {
 			time: 'Hora',
 			direction: 'Direção',

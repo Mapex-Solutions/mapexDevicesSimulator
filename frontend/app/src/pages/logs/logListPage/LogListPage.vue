@@ -105,7 +105,7 @@
 					icon="receipt_long"
 					:item-label="t('logs.itemLabel')"
 					:item-label-plural="t('logs.itemLabelPlural')"
-					:items-count="logsStore.total"
+					:items-count="logsStore.items.length"
 					:items-per-page="logsStore.itemsPerPage"
 					:columns="menuColumns"
 					:filtered="hasActiveFilters"
@@ -126,7 +126,7 @@
 		<!-- Rows -->
 		<div v-else class="row">
 			<div v-for="log in logsStore.items" :key="log.id" class="col-12 q-mb-xs">
-				<DataRow :data="log" :columns="visibleColumns" :show-actions="false" />
+				<DataRow :data="log" :columns="visibleColumns" :show-actions="false" @click="openDetail(log)" />
 			</div>
 
 			<div v-if="!logsStore.items.length" class="col-12">
@@ -139,18 +139,25 @@
 			</div>
 		</div>
 
-		<!-- Pagination -->
-		<div class="row justify-center q-mt-lg q-mb-lg">
-			<q-pagination
-				v-if="logsStore.items.length"
-				:model-value="logsStore.page"
-				direction-links
-				boundary-links
-				class="rounded-borders"
-				color="primary"
-				active-color="primary"
-				:max="logsStore.totalPages"
-				@update:model-value="handlePageChange"
+		<!-- Pagination: cursor-based, so previous/next only (no total page count) -->
+		<div v-if="logsStore.items.length" class="row justify-center items-center q-gutter-sm q-mt-lg q-mb-lg">
+			<q-btn
+				flat
+				dense
+				no-caps
+				icon="chevron_left"
+				:label="t('logs.previous')"
+				:disable="!logsStore.hasPrev || logsStore.loading"
+				@click="logsStore.prev"
+			/>
+			<q-btn
+				flat
+				dense
+				no-caps
+				icon-right="chevron_right"
+				:label="t('logs.next')"
+				:disable="!logsStore.hasNext || logsStore.loading"
+				@click="logsStore.next"
 			/>
 		</div>
 
@@ -164,6 +171,16 @@
 			@reset="handleAdvancedFiltersReset"
 			@pending-change="handlePendingChange"
 		/>
+
+		<!-- Log detail: the same drawer the console uses, showing payload + response -->
+		<GenericDrawer
+			v-model="detailOpen"
+			:title="t('console.details')"
+			icon="mdi-text-box-search-outline"
+			:close-tooltip="t('common.close')"
+		>
+			<MessageDetail :message="selectedMessage" />
+		</GenericDrawer>
 	</q-page>
 </template>
 
@@ -171,8 +188,9 @@
 /** TYPE IMPORTS */
 import type { ListHeaderMenuColumn } from '@components/ListHeaderMenu';
 import type { DataRowColumn } from '@components/DataRow';
-import type { FilterField, FilterValues } from '@components/AdvancedFiltersDrawer';
-import type { LogDirection, ProtocolId } from '@services/sim';
+import type { FilterField, FilterValues, FilterAutocompleteOption } from '@components/AdvancedFiltersDrawer';
+import type { ConsoleMessage } from '@stores/messages';
+import type { Log, LogDirection, ProtocolId } from '@services/sim';
 
 /** VUE IMPORTS */
 import { computed, onMounted, ref } from 'vue';
@@ -184,6 +202,8 @@ import { DataRow } from '@components/DataRow';
 import { ListCardEmpty } from '@components/ListCardEmpty';
 import { AdvancedFiltersDrawer } from '@components/AdvancedFiltersDrawer';
 import { AppTooltip } from '@components/AppTooltip';
+import { GenericDrawer } from '@components/GenericDrawer';
+import { MessageDetail } from '@components/MessageDetail';
 import { protocolIcon } from '@components/protocols/ProtocolRegistry';
 
 /** COMPOSABLES */
@@ -191,21 +211,25 @@ import { useTranslations } from '@composables/i18n';
 
 /** STORES */
 import { useLogsStore } from '@stores/logs';
+import { useDevicesStore } from '@stores/devices';
 
 const MAX_VISIBLE_CHIPS = 2;
 
 /** COMPOSABLES & STORES */
 const { t } = useTranslations();
 const logsStore = useLogsStore();
+const devicesStore = useDevicesStore();
 
 /** STATE */
 const quickSearch = ref('');
 const quickProtocol = ref<string | null>(null);
 const showFiltersDrawer = ref(false);
-const advancedFilterValues = ref<FilterValues>({ kind: null, direction: null });
+const advancedFilterValues = ref<FilterValues>({ kind: null, direction: null, device: null, event: null, dateFrom: null, dateTo: null });
 const hasPendingAdvancedFilters = ref(false);
-const filters = ref<{ search?: string; protocol?: string; kind?: string; direction?: string }>({});
+const filters = ref<{ search?: string; protocol?: string; kind?: string; direction?: string; device?: string; event?: string; dateFrom?: string; dateTo?: string }>({});
 const columnVisibility = ref({ direction: true, kind: true, status: true });
+const detailOpen = ref(false);
+const selectedLog = ref<Log | null>(null);
 
 /** COMPUTED */
 const protocolOptions = computed(() => [
@@ -213,7 +237,17 @@ const protocolOptions = computed(() => [
 	...(['http', 'mqtt', 'lorawan', 'basicstation'] as ProtocolId[]).map((p) => ({ label: t(`protocol.${p}`), value: p })),
 ]);
 
+// Ordered by what someone scanning the history reaches for first: when it
+// happened, then which device, then which event, and only then the technical
+// type/direction filters.
 const advancedFilterFields = computed<FilterField[]>(() => [
+	{ key: 'dateFrom', type: 'input', label: t('logs.filter.dateFrom'), icon: 'event', inputType: 'date' },
+	{ key: 'dateTo', type: 'input', label: t('logs.filter.dateTo'), icon: 'event', inputType: 'date' },
+	{
+		key: 'device', type: 'autocomplete', label: t('logs.filter.device'), icon: 'memory',
+		placeholder: t('logs.filter.devicePlaceholder'), fetchOptions: fetchDeviceOptions,
+	},
+	{ key: 'event', type: 'input', label: t('logs.filter.event'), icon: 'bolt', placeholder: t('logs.filter.eventPlaceholder') },
 	{
 		key: 'kind', type: 'select', label: t('console.filter.kind'), icon: 'category',
 		options: [
@@ -232,21 +266,21 @@ const advancedFilterFields = computed<FilterField[]>(() => [
 	},
 ]);
 
-const hasActiveFilters = computed(() =>
-	Boolean(filters.value.search || filters.value.protocol || filters.value.kind || filters.value.direction),
-);
+const hasActiveFilters = computed(() => Object.keys(filters.value).length > 0);
 
 const advancedFiltersCount = computed(() => {
-	let count = 0;
-	if (filters.value.kind) count += 1;
-	if (filters.value.direction) count += 1;
-	return count;
+	const keys = ['kind', 'direction', 'device', 'event', 'dateFrom', 'dateTo'] as const;
+	return keys.filter((k) => filters.value[k]).length;
 });
 
 const activeFilterChips = computed(() => {
 	const chips: { key: string; label: string; value: string }[] = [];
 	if (filters.value.search) chips.push({ key: 'search', label: t('console.filter.search'), value: filters.value.search });
 	if (filters.value.protocol) chips.push({ key: 'protocol', label: t('console.filter.protocol'), value: t(`protocol.${filters.value.protocol}`) });
+	if (filters.value.dateFrom) chips.push({ key: 'dateFrom', label: t('logs.filter.dateFrom'), value: filters.value.dateFrom });
+	if (filters.value.dateTo) chips.push({ key: 'dateTo', label: t('logs.filter.dateTo'), value: filters.value.dateTo });
+	if (filters.value.device) chips.push({ key: 'device', label: t('logs.filter.device'), value: filters.value.device });
+	if (filters.value.event) chips.push({ key: 'event', label: t('logs.filter.event'), value: filters.value.event });
 	if (filters.value.kind) chips.push({ key: 'kind', label: t('console.filter.kind'), value: t(`console.kind.${filters.value.kind}`) });
 	if (filters.value.direction) chips.push({ key: 'direction', label: t('console.filter.direction'), value: dirLabel(filters.value.direction as LogDirection) });
 	return chips;
@@ -281,6 +315,28 @@ const visibleColumns = computed(() =>
 		return true;
 	}),
 );
+
+// Map the selected log into the console message shape so the shared detail drawer
+// renders it (payload + response + status), with the event name surfaced as meta.
+const selectedMessage = computed<ConsoleMessage | null>(() => {
+	const log = selectedLog.value;
+	if (!log) return null;
+	const message: ConsoleMessage = {
+		id: log.id,
+		ts: log.created ?? '',
+		protocol: log.protocol,
+		deviceId: log.deviceId,
+		deviceName: log.deviceName,
+		direction: log.direction,
+		kind: log.kind,
+		summary: log.summary,
+		payload: log.payload,
+	};
+	if (log.status) message.status = log.status;
+	if (log.response) message.response = log.response;
+	if (log.eventName) message.meta = { event: log.eventName };
+	return message;
+});
 
 /** FUNCTIONS */
 
@@ -325,6 +381,12 @@ function syncStore(): void {
 	if (filters.value.protocol) map.protocol = filters.value.protocol;
 	if (filters.value.kind) map.kind = filters.value.kind;
 	if (filters.value.direction) map.direction = filters.value.direction;
+	if (filters.value.device) map.device = filters.value.device;
+	if (filters.value.event) map.event = filters.value.event;
+	// The date inputs are day-precision; widen them to the full day so the bounds
+	// are inclusive against the timestamp the engine stores.
+	if (filters.value.dateFrom) map.dateFrom = `${filters.value.dateFrom}T00:00:00Z`;
+	if (filters.value.dateTo) map.dateTo = `${filters.value.dateTo}T23:59:59Z`;
 	logsStore.setFilters(map);
 }
 
@@ -347,12 +409,24 @@ function applyQuickFilters(): void {
  */
 function handleAdvancedFiltersApply(values: FilterValues): void {
 	advancedFilterValues.value = values;
-	if (values.kind) filters.value.kind = String(values.kind);
-	else delete filters.value.kind;
-	if (values.direction) filters.value.direction = String(values.direction);
-	else delete filters.value.direction;
+	applyDrawerValue('kind', values.kind);
+	applyDrawerValue('direction', values.direction);
+	applyDrawerValue('device', values.device);
+	applyDrawerValue('event', values.event);
+	applyDrawerValue('dateFrom', values.dateFrom);
+	applyDrawerValue('dateTo', values.dateTo);
 	hasPendingAdvancedFilters.value = false;
 	syncStore();
+}
+
+/**
+ * Copy one drawer value into the active filters, or drop it when empty.
+ * @param {keyof typeof filters.value} key - the filter key
+ * @param {unknown} value - the drawer value
+ */
+function applyDrawerValue(key: 'kind' | 'direction' | 'device' | 'event' | 'dateFrom' | 'dateTo', value: unknown): void {
+	if (value) filters.value[key] = String(value);
+	else delete filters.value[key];
 }
 
 /**
@@ -364,7 +438,7 @@ function handlePendingChange(pending: boolean): void {
 }
 
 function handleAdvancedFiltersReset(): void {
-	advancedFilterValues.value = { kind: null, direction: null };
+	advancedFilterValues.value = { kind: null, direction: null, device: null, event: null, dateFrom: null, dateTo: null };
 }
 
 /**
@@ -374,8 +448,10 @@ function handleAdvancedFiltersReset(): void {
 function removeFilter(key: string): void {
 	if (key === 'search') { delete filters.value.search; quickSearch.value = ''; }
 	else if (key === 'protocol') { delete filters.value.protocol; quickProtocol.value = null; }
-	else if (key === 'kind') { delete filters.value.kind; advancedFilterValues.value.kind = null; }
-	else if (key === 'direction') { delete filters.value.direction; advancedFilterValues.value.direction = null; }
+	else {
+		delete filters.value[key as keyof typeof filters.value];
+		advancedFilterValues.value[key] = null;
+	}
 	syncStore();
 }
 
@@ -383,7 +459,7 @@ function clearAllFilters(): void {
 	filters.value = {};
 	quickSearch.value = '';
 	quickProtocol.value = null;
-	advancedFilterValues.value = { kind: null, direction: null };
+	handleAdvancedFiltersReset();
 	hasPendingAdvancedFilters.value = false;
 	syncStore();
 }
@@ -401,14 +477,6 @@ function handleColumnsUpdate(columns: ListHeaderMenuColumn[]): void {
 }
 
 /**
- * Change page.
- * @param {number} page - the new page
- */
-function handlePageChange(page: number): void {
-	logsStore.setPage(page);
-}
-
-/**
  * Change items per page.
  * @param {number} value - the new value
  */
@@ -416,9 +484,32 @@ function handleItemsPerPageChange(value: number): void {
 	logsStore.setItemsPerPage(value);
 }
 
+/**
+ * Search the configured devices for the deviceId filter autocomplete.
+ * @param {string} search - the typed term
+ * @returns {Promise<FilterAutocompleteOption[]>} the matching devices
+ */
+async function fetchDeviceOptions(search: string): Promise<FilterAutocompleteOption[]> {
+	const term = search.trim().toLowerCase();
+	return devicesStore.items
+		.filter((device) => !term || device.name.toLowerCase().includes(term) || device.deviceId.toLowerCase().includes(term))
+		.slice(0, 20)
+		.map((device) => ({ id: device.deviceId, label: device.name, caption: device.deviceId }));
+}
+
+/**
+ * Open the detail drawer on a log row.
+ * @param {Log} log - the clicked log
+ */
+function openDetail(log: Log): void {
+	selectedLog.value = log;
+	detailOpen.value = true;
+}
+
 /** LIFECYCLE HOOKS */
 onMounted(() => {
-	void logsStore.fetch();
+	logsStore.fetch();
+	void devicesStore.fetch();
 });
 </script>
 
