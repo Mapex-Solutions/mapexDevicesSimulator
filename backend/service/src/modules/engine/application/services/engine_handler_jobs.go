@@ -19,6 +19,7 @@ func buildSendSpec(d devicescontract.Device, e entities.DeviceEvent) (sendSpec, 
 		deviceKey:  d.ID,
 		deviceID:   d.DeviceID,
 		deviceName: d.Name,
+		eventName:  e.Name,
 		storeLogs:  d.StoreLogs,
 	}
 	switch d.ProtocolID {

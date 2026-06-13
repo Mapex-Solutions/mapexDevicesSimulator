@@ -27,11 +27,11 @@ func NewWriter(deps di.LogsServiceDI) ports.LogWriter {
 // List returns a page of the message history matching the query filters.
 func (s *LogsService) List(ctx context.Context, q *dtos.LogQuery) (*dtos.LogPage, error) {
 	filter := s.filterFromQuery(q)
-	items, total, err := s.deps.Repo.ListPage(ctx, filter)
+	items, next, err := s.deps.Repo.ListPage(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
-	return s.buildPage(items, total)
+	return s.buildPage(items, next)
 }
 
 // Append persists one device message.

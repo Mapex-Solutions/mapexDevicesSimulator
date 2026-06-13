@@ -20,7 +20,7 @@ import (
 func InitRepositories() {
 	c := container.GetContainer()
 	if err := c.Invoke(func(mgr *sqliteManager.SQLiteManager) {
-		if err := mgr.Migrate(context.Background(), sqliteRepo.Migrations...); err != nil {
+		if err := sqliteRepo.EnsureSchema(context.Background(), mgr); err != nil {
 			logger.Panic("[MODULE:Logs] migrate: " + err.Error())
 		}
 	}); err != nil {

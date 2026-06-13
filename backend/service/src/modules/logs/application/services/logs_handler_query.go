@@ -12,17 +12,20 @@ import (
 func (s *LogsService) filterFromQuery(q *dtos.LogQuery) repositories.LogFilter {
 	return repositories.LogFilter{
 		Limit:     q.Limit,
-		Offset:    q.Offset,
+		Cursor:    q.Cursor,
 		Protocol:  q.Protocol,
 		Kind:      q.Kind,
 		Direction: q.Direction,
 		Device:    q.Device,
+		Event:     q.Event,
+		DateFrom:  q.DateFrom,
+		DateTo:    q.DateTo,
 		Q:         q.Q,
 	}
 }
 
-// buildPage maps the stored entities to wire DTOs and wraps them with the total.
-func (s *LogsService) buildPage(list []entities.Log, total int) (*dtos.LogPage, error) {
+// buildPage maps the stored entities to wire DTOs and attaches the next cursor.
+func (s *LogsService) buildPage(list []entities.Log, next string) (*dtos.LogPage, error) {
 	out := make([]dtos.Log, 0, len(list))
 	for i := range list {
 		dto, err := mapper.EntityToDto[entities.Log, dtos.Log](&list[i])
@@ -31,5 +34,5 @@ func (s *LogsService) buildPage(list []entities.Log, total int) (*dtos.LogPage, 
 		}
 		out = append(out, *dto)
 	}
-	return &dtos.LogPage{Items: out, Total: total}, nil
+	return &dtos.LogPage{Items: out, NextCursor: next}, nil
 }

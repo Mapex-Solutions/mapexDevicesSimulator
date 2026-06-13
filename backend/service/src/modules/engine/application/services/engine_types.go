@@ -72,6 +72,7 @@ type sendSpec struct {
 	deviceKey  string // server id (d.ID); used to find the device's live session
 	deviceID   string // user-facing id (d.DeviceID); drives {{deviceId}}
 	deviceName string
+	eventName  string // the fired event's name, persisted on the log for filtering
 	storeLogs  bool
 
 	// http

@@ -77,6 +77,7 @@ func (s *EngineService) reportNoLink(spec sendSpec, payload, summary string) {
 			Protocol:   spec.protocol,
 			DeviceID:   spec.deviceID,
 			DeviceName: spec.deviceName,
+			EventName:  spec.eventName,
 			Direction:  "system",
 			Kind:       "status",
 			Summary:    summary,
@@ -153,11 +154,13 @@ func (s *EngineService) report(spec sendSpec, payload, summary string, res engin
 			Protocol:   spec.protocol,
 			DeviceID:   spec.deviceID,
 			DeviceName: spec.deviceName,
+			EventName:  spec.eventName,
 			Direction:  "up",
 			Kind:       "data",
 			Summary:    summary,
 			Status:     status,
 			Payload:    payload,
+			Response:   response,
 		})
 	}
 }

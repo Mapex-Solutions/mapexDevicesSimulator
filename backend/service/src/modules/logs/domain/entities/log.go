@@ -9,11 +9,13 @@ type Log struct {
 	Protocol   string    `db:"protocol"`
 	DeviceID   string    `db:"device_id"`
 	DeviceName string    `db:"device_name"`
+	EventName  string    `db:"event_name"`
 	Direction  string    `db:"direction"`
 	Kind       string    `db:"kind"`
 	Summary    string    `db:"summary"`
 	Status     string    `db:"status"`
 	Payload    string    `db:"payload"`
+	Response   string    `db:"response"`
 	Created    time.Time `db:"created"`
 }
 
