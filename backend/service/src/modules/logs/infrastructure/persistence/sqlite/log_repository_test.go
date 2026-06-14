@@ -83,6 +83,34 @@ func TestLogRepository_ListPage(t *testing.T) {
 	}
 }
 
+// The date range uses the same RFC3339 bounds the UI sends. A dateTo on the 12th
+// must exclude rows on the 13th, even though they share the year and month.
+func TestLogRepository_DateRangeExcludesOtherDays(t *testing.T) {
+	ctx := context.Background()
+	repo := setup(t)
+
+	seed := []entities.Log{
+		{Protocol: "http", DeviceID: "d1", DeviceName: "A", Direction: "up", Kind: "data", Summary: "twelfth", Payload: "{}", Created: time.Date(2026, 6, 12, 12, 0, 0, 0, time.UTC)},
+		{Protocol: "http", DeviceID: "d1", DeviceName: "A", Direction: "up", Kind: "data", Summary: "thirteenth", Payload: "{}", Created: time.Date(2026, 6, 13, 10, 0, 0, 0, time.UTC)},
+	}
+	for i := range seed {
+		if _, err := repo.Insert(ctx, &seed[i]); err != nil {
+			t.Fatalf("insert: %v", err)
+		}
+	}
+
+	items, _, err := repo.ListPage(ctx, repositories.LogFilter{
+		DateFrom: "2026-06-12T00:00:00Z",
+		DateTo:   "2026-06-12T23:59:59Z",
+	})
+	if err != nil {
+		t.Fatalf("ListPage: %v", err)
+	}
+	if len(items) != 1 || items[0].Summary != "twelfth" {
+		t.Fatalf("date range should keep only the 12th, got %+v", items)
+	}
+}
+
 func TestLogRepository_CursorPagination(t *testing.T) {
 	ctx := context.Background()
 	repo := setup(t)
