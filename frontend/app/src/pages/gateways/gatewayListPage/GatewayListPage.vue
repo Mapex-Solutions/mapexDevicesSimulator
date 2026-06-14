@@ -200,9 +200,30 @@ function onAction(key: string, gateway: Gateway): void {
 }
 
 /**
- * Duplicate a gateway through the create endpoint, copying every field and only
- * renaming the copy. The suffix follows the language active at the moment of the
- * action.
+ * Mint a 16-hex EUI not already in use, so a copied gateway has its own identity
+ * on the LNS instead of clashing with the original.
+ * @returns {string} a unique gateway EUI
+ */
+function uniqueEui(): string {
+	const taken = new Set(gatewaysStore.items.map((gateway) => gateway.eui.toUpperCase()));
+	let candidate = randomEui();
+	while (taken.has(candidate)) candidate = randomEui();
+	return candidate;
+}
+
+/**
+ * Generate a random 16-hex-character gateway EUI.
+ * @returns {string} the EUI
+ */
+function randomEui(): string {
+	const bytes = new Uint8Array(8);
+	crypto.getRandomValues(bytes);
+	return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
+/**
+ * Duplicate a gateway through the create endpoint, copying every field, renaming
+ * the copy, and minting a fresh EUI so it is a distinct gateway.
  * @param {Gateway} gateway - the gateway to duplicate
  */
 async function duplicateGateway(gateway: Gateway): Promise<void> {
@@ -211,7 +232,7 @@ async function duplicateGateway(gateway: Gateway): Promise<void> {
 	const source = JSON.parse(JSON.stringify(gateway)) as Gateway;
 	const input: GatewayInput = {
 		name: t('common.duplicateName', { name: gateway.name }),
-		eui: source.eui,
+		eui: uniqueEui(),
 		enabled: source.enabled,
 		region: source.region,
 		description: source.description,

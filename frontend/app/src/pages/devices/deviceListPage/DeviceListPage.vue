@@ -194,9 +194,22 @@ function onAction(key: string, device: Device): void {
 }
 
 /**
- * Duplicate a device through the create endpoint, copying every field and only
- * renaming the copy. The suffix follows the language active at the moment of the
- * action.
+ * Build a deviceId for a copy that does not collide with an existing one,
+ * appending "-copy" (then "-copy-2", "-copy-3", ...) until it is free.
+ * @param {string} base - the source device's id
+ * @returns {string} a unique deviceId
+ */
+function uniqueDeviceId(base: string): string {
+	const taken = new Set(devicesStore.items.map((device) => device.deviceId));
+	let candidate = `${base}-copy`;
+	let n = 2;
+	while (taken.has(candidate)) candidate = `${base}-copy-${n++}`;
+	return candidate;
+}
+
+/**
+ * Duplicate a device through the create endpoint, copying every field, renaming
+ * the copy, and minting a fresh deviceId so it is a distinct device.
  * @param {Device} device - the device to duplicate
  */
 async function duplicateDevice(device: Device): Promise<void> {
@@ -205,7 +218,9 @@ async function duplicateDevice(device: Device): Promise<void> {
 	const source = JSON.parse(JSON.stringify(device)) as Device;
 	const input: DeviceInput = {
 		name: t('common.duplicateName', { name: device.name }),
-		deviceId: source.deviceId,
+		// A copy must get its own deviceId: the console and logs identify a device by
+		// it, so sharing it would merge the copy with the original and hide its traffic.
+		deviceId: uniqueDeviceId(source.deviceId),
 		protocolId: source.protocolId,
 		enabled: source.enabled,
 		storeLogs: source.storeLogs,
