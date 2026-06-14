@@ -83,7 +83,7 @@ import { useTranslations } from '@composables/i18n';
 import { useGatewayConnections } from '@composables/gateways';
 
 /** UTILS */
-import { useQuasar } from 'quasar';
+import { notifySuccess, notifyFail, dialogDelete } from '@utils/alert';
 
 /** SERVICES */
 import { useRouter } from 'vue-router';
@@ -93,7 +93,6 @@ import { useGatewaysStore } from '@stores/gateways';
 
 /** COMPOSABLES & STORES */
 const { t } = useTranslations();
-const $q = useQuasar();
 const router = useRouter();
 const gatewaysStore = useGatewaysStore();
 const { connectionOf } = useGatewayConnections();
@@ -229,9 +228,9 @@ async function duplicateGateway(gateway: Gateway): Promise<void> {
 	};
 	try {
 		await gatewaysStore.create(input);
-		$q.notify({ type: 'positive', message: t('common.duplicated') });
+		notifySuccess({ message: t('common.duplicated') });
 	} catch {
-		$q.notify({ type: 'negative', message: t('common.saveFailed') });
+		notifyFail({ message: t('common.saveFailed') });
 	}
 }
 
@@ -239,18 +238,19 @@ async function duplicateGateway(gateway: Gateway): Promise<void> {
  * Confirm and delete a gateway.
  * @param {Gateway} gateway - the gateway to delete
  */
-function onDelete(gateway: Gateway): void {
-	$q.dialog({
+async function onDelete(gateway: Gateway): Promise<void> {
+	const confirmed = await dialogDelete({
 		title: t('common.delete'),
 		message: t('common.deleteConfirm', { name: gateway.name }),
-		cancel: true,
-	}).onOk(async () => {
-		try {
-			await gatewaysStore.remove(gateway.id);
-		} catch (err) {
-			$q.notify({ type: 'negative', message: err instanceof Error ? err.message : t('common.deleteFailed') });
-		}
+		ok: { label: t('common.delete'), color: 'negative' },
+		cancel: { label: t('common.cancel'), flat: true },
 	});
+	if (!confirmed) return;
+	try {
+		await gatewaysStore.remove(gateway.id);
+	} catch (err) {
+		notifyFail({ message: err instanceof Error ? err.message : t('common.deleteFailed') });
+	}
 }
 
 /** LIFECYCLE HOOKS */

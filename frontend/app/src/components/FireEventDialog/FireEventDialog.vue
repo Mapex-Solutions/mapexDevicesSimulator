@@ -112,7 +112,7 @@ import { LoraWanEventConfig, defaultLoraWanEvent } from '@components/protocols/L
 import { useTranslations } from '@composables/i18n';
 
 /** UTILS */
-import { useQuasar } from 'quasar';
+import { notifySuccess, notifyFail } from '@utils/alert';
 import { buildHttpBody, renderTemplate, validateJsonBody } from '@utils/template';
 import { formatJson } from '@utils/format-json';
 
@@ -128,7 +128,6 @@ const open = defineModel<boolean>({ required: true });
 
 /** COMPOSABLES & STORES */
 const { t } = useTranslations();
-const $q = useQuasar();
 const devicesStore = useDevicesStore();
 
 /** STATE */
@@ -283,10 +282,10 @@ async function onSend(): Promise<void> {
 
 	try {
 		await sim.devices.fire({ id: device.value.id }, body);
-		$q.notify({ type: 'positive', message: t('fireEvent.sent') });
+		notifySuccess({ message: t('fireEvent.sent') });
 		open.value = false;
 	} catch {
-		$q.notify({ type: 'negative', message: t('fireEvent.failed') });
+		notifyFail({ message: t('fireEvent.failed') });
 	}
 }
 

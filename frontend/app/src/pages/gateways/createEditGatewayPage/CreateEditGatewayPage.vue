@@ -172,7 +172,7 @@ import { useTranslations } from '@composables/i18n';
 import { useStepperNavigation } from '@composables/shared/form';
 
 /** UTILS */
-import { useQuasar } from 'quasar';
+import { notifyFail } from '@utils/alert';
 
 /** SERVICES */
 import { useRoute, useRouter } from 'vue-router';
@@ -186,7 +186,6 @@ const LINK_PROTOCOLS: GatewayLinkProtocol[] = ['basicstation', 'udp'];
 
 /** COMPOSABLES & STORES */
 const { t } = useTranslations();
-const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
 const gatewaysStore = useGatewaysStore();
@@ -309,7 +308,7 @@ function onNext(step: number): void {
 	if (step > currentStep.value) {
 		const message = stepError(currentStep.value);
 		if (message) {
-			$q.notify({ type: 'negative', message });
+			notifyFail({ message });
 			return;
 		}
 	}
@@ -335,7 +334,7 @@ async function onSave(): Promise<void> {
 	const error = firstError();
 	if (error) {
 		changeStep(error.step);
-		$q.notify({ type: 'negative', message: error.message });
+		notifyFail({ message: error.message });
 		return;
 	}
 
@@ -354,7 +353,7 @@ async function onSave(): Promise<void> {
 		else await gatewaysStore.create(input);
 		goBack();
 	} catch (err) {
-		$q.notify({ type: 'negative', message: err instanceof Error ? err.message : t('common.saveFailed') });
+		notifyFail({ message: err instanceof Error ? err.message : t('common.saveFailed') });
 	} finally {
 		saving.value = false;
 	}

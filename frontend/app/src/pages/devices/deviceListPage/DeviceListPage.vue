@@ -83,7 +83,7 @@ import { protocolIcon } from '@components/protocols/ProtocolRegistry';
 import { useTranslations } from '@composables/i18n';
 
 /** UTILS */
-import { useQuasar } from 'quasar';
+import { notifySuccess, notifyFail, dialogDelete } from '@utils/alert';
 
 /** SERVICES */
 import { useRoute, useRouter } from 'vue-router';
@@ -93,7 +93,6 @@ import { useDevicesStore } from '@stores/devices';
 
 /** COMPOSABLES & STORES */
 const { t } = useTranslations();
-const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
 const devicesStore = useDevicesStore();
@@ -225,9 +224,9 @@ async function duplicateDevice(device: Device): Promise<void> {
 	};
 	try {
 		await devicesStore.create(input);
-		$q.notify({ type: 'positive', message: t('common.duplicated') });
+		notifySuccess({ message: t('common.duplicated') });
 	} catch {
-		$q.notify({ type: 'negative', message: t('common.saveFailed') });
+		notifyFail({ message: t('common.saveFailed') });
 	}
 }
 
@@ -235,18 +234,19 @@ async function duplicateDevice(device: Device): Promise<void> {
  * Confirm and delete a device.
  * @param {Device} device - the device to delete
  */
-function onDelete(device: Device): void {
-	$q.dialog({
+async function onDelete(device: Device): Promise<void> {
+	const confirmed = await dialogDelete({
 		title: t('common.delete'),
 		message: t('common.deleteConfirm', { name: device.name }),
-		cancel: true,
-	}).onOk(async () => {
-		try {
-			await devicesStore.remove(device.id);
-		} catch (err) {
-			$q.notify({ type: 'negative', message: err instanceof Error ? err.message : t('common.deleteFailed') });
-		}
+		ok: { label: t('common.delete'), color: 'negative' },
+		cancel: { label: t('common.cancel'), flat: true },
 	});
+	if (!confirmed) return;
+	try {
+		await devicesStore.remove(device.id);
+	} catch (err) {
+		notifyFail({ message: err instanceof Error ? err.message : t('common.deleteFailed') });
+	}
 }
 
 /** LIFECYCLE HOOKS */

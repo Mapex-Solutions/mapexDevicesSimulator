@@ -58,7 +58,8 @@ import { AppTooltip } from '@components/AppTooltip';
 import { useTranslations } from '@composables/i18n';
 
 /** UTILS */
-import { copyToClipboard, useQuasar } from 'quasar';
+import { copyToClipboard } from 'quasar';
+import { notifySuccess } from '@utils/alert';
 import { formatJson } from '@utils/format-json';
 import { statusColor } from '@utils/status-color';
 
@@ -67,7 +68,6 @@ const props = defineProps<MessageDetailProps>();
 
 /** COMPOSABLES & STORES */
 const { t } = useTranslations();
-const $q = useQuasar();
 
 /** COMPUTED */
 const metaEntries = computed(() => Object.entries(props.message?.meta ?? {}));
@@ -107,7 +107,7 @@ const dirLabel = computed(() => {
  */
 async function copy(text: string): Promise<void> {
 	await copyToClipboard(text);
-	$q.notify({ type: 'positive', message: t('console.copied') });
+	notifySuccess({ message: t('console.copied') });
 }
 </script>
 

@@ -33,18 +33,15 @@
 </template>
 
 <script setup lang="ts">
-/** VUE IMPORTS */
-import { useQuasar } from 'quasar';
-
 /** COMPOSABLES */
 import { useTranslations } from '@composables/i18n';
 
 /** UTILS */
+import { notifySuccess, notifyWarning } from '@utils/alert';
 import { TEMPLATE_PLACEHOLDERS } from '@utils/template';
 
 /** COMPOSABLES & STORES */
 const { t } = useTranslations();
-const $q = useQuasar();
 
 /** FUNCTIONS */
 
@@ -55,9 +52,9 @@ const $q = useQuasar();
 async function copy(token: string): Promise<void> {
 	try {
 		await navigator.clipboard.writeText(token);
-		$q.notify({ type: 'positive', message: t('templateHints.copied', { token }), timeout: 1200 });
+		notifySuccess({ message: t('templateHints.copied', { token }), timeout: 1200 });
 	} catch {
-		$q.notify({ type: 'warning', message: t('templateHints.copyFailed') });
+		notifyWarning({ message: t('templateHints.copyFailed') });
 	}
 }
 </script>

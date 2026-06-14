@@ -8,7 +8,7 @@ import { useTheme } from '@composables/theme';
 import { useBreadcrumbs } from '../composables';
 
 /** UTILS */
-import { useQuasar } from 'quasar';
+import { notifyInfo } from '@utils/alert';
 
 /** LOCAL IMPORTS */
 import { buildMenuList } from '../constants';
@@ -19,7 +19,6 @@ const emit = defineEmits<{
 }>();
 
 /** COMPOSABLES & STORES */
-const $q = useQuasar();
 const { t, locale } = useI18n();
 const { isDark, toggleTheme } = useTheme();
 const translatedMenu = computed(() => buildMenuList((key) => t(key)));
@@ -51,7 +50,7 @@ function changeLanguage(lang: string): void {
   locale.value = lang;
   localStorage.setItem('user-locale', lang);
   const label = languageList.value.find(l => l.value === lang)?.label;
-  $q.notify({ type: 'info', message: `${t('language.changed')} ${label}` });
+  notifyInfo({ message: `${t('language.changed')} ${label}` });
 }
 </script>
 
