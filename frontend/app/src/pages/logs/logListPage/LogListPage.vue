@@ -208,6 +208,7 @@ import { protocolIcon } from '@components/protocols/ProtocolRegistry';
 
 /** COMPOSABLES */
 import { useTranslations } from '@composables/i18n';
+import { useDateFormat } from '@composables/datetime';
 
 /** STORES */
 import { useLogsStore } from '@stores/logs';
@@ -217,6 +218,7 @@ const MAX_VISIBLE_CHIPS = 2;
 
 /** COMPOSABLES & STORES */
 const { t } = useTranslations();
+const { formatDateTime } = useDateFormat();
 const logsStore = useLogsStore();
 const devicesStore = useDevicesStore();
 
@@ -339,18 +341,6 @@ const selectedMessage = computed<ConsoleMessage | null>(() => {
 });
 
 /** FUNCTIONS */
-
-/**
- * Format an ISO timestamp as a short local date and time.
- * @param {string} iso - the ISO timestamp
- * @returns {string} the formatted date and time
- */
-function formatDateTime(iso: string): string {
-	if (!iso) return '—';
-	const date = new Date(iso);
-	if (Number.isNaN(date.getTime())) return iso;
-	return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-}
 
 /**
  * Human label for a message direction.

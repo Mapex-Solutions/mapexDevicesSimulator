@@ -81,6 +81,7 @@ import { protocolIcon } from '@components/protocols/ProtocolRegistry';
 
 /** COMPOSABLES */
 import { useTranslations } from '@composables/i18n';
+import { useDateFormat } from '@composables/datetime';
 
 /** UTILS */
 import { notifySuccess, notifyFail, dialogDelete } from '@utils/alert';
@@ -93,6 +94,7 @@ import { useDevicesStore } from '@stores/devices';
 
 /** COMPOSABLES & STORES */
 const { t } = useTranslations();
+const { formatDate } = useDateFormat();
 const route = useRoute();
 const router = useRouter();
 const devicesStore = useDevicesStore();
@@ -154,17 +156,6 @@ function targetOf(device: Device): string {
 	if (config.kind === 'lorawan') return `${config.region} · ${config.macVersion}`;
 	if (config.kind === 'basicstation') return config.lnsUri;
 	return config.url;
-}
-
-/**
- * Format an ISO timestamp as a short local date.
- * @param {string} iso - the ISO timestamp
- * @returns {string} the formatted date
- */
-function formatDate(iso: string): string {
-	if (!iso) return '—';
-	const date = new Date(iso);
-	return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString();
 }
 
 /**

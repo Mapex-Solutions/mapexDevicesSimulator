@@ -80,6 +80,7 @@ import { ListCardEmpty } from '@components/ListCardEmpty';
 
 /** COMPOSABLES */
 import { useTranslations } from '@composables/i18n';
+import { useDateFormat } from '@composables/datetime';
 import { useGatewayConnections } from '@composables/gateways';
 
 /** UTILS */
@@ -93,6 +94,7 @@ import { useGatewaysStore } from '@stores/gateways';
 
 /** COMPOSABLES & STORES */
 const { t } = useTranslations();
+const { formatDate } = useDateFormat();
 const router = useRouter();
 const gatewaysStore = useGatewaysStore();
 const { connectionOf } = useGatewayConnections();
@@ -160,17 +162,6 @@ const rowActions = computed<DataRowActionConfig>(() => ({
  */
 function linkTargetOf(gateway: Gateway): string {
 	return gateway.link.protocol === 'udp' ? `${gateway.link.host}:${gateway.link.port}` : gateway.link.lnsUri;
-}
-
-/**
- * Format an ISO timestamp as a short local date.
- * @param {string} iso - the ISO timestamp
- * @returns {string} the formatted date
- */
-function formatDate(iso: string): string {
-	if (!iso) return '—';
-	const date = new Date(iso);
-	return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString();
 }
 
 /**
