@@ -85,6 +85,9 @@ type sendSpec struct {
 	clientID  string
 	username  string
 	password  string
+	tlsCert   string // PEM client cert, for an ssl:// broker with cert auth
+	tlsKey    string // PEM client key
+	tlsCa     string // PEM CA the broker is verified against
 	topic     string
 	qos       byte
 	retain    bool

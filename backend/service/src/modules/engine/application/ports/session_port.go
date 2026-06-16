@@ -12,10 +12,15 @@ type SessionSpec struct {
 	StoreLogs  bool
 
 	// mqtt
-	BrokerURL     string
-	ClientID      string
-	Username      string
-	Password      string
+	BrokerURL string
+	ClientID  string
+	Username  string
+	Password  string
+	// TLS client-cert material, in PEM. Set for an ssl:// broker with
+	// certificate auth; the connector builds the tls.Config from them.
+	TLSCert       string
+	TLSKey        string
+	TLSCa         string
 	Subscriptions []Subscription // downlink topics, when the device has receive enabled
 
 	// lorawan (the device's crypto material + the gateway link it transmits through)

@@ -2,6 +2,8 @@ package session
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 
 	mqttclient "github.com/Mapex-Solutions/mapexGoKit/infrastructure/mqttclient"
@@ -26,12 +28,20 @@ func (c *mqttConnector) Protocol() string { return "mqtt" }
 // returned session keeps the connection open for uplinks. The session manager owns
 // the reconnect loop; Open is a single attempt.
 func (c *mqttConnector) Open(ctx context.Context, spec ports.SessionSpec, in ports.InboundSink, status ports.StatusSink) (ports.Session, error) {
-	cli, err := mqttclient.New(mqttclient.Config{
+	mc := mqttclient.Config{
 		BrokerURL: spec.BrokerURL,
 		ClientID:  spec.ClientID,
 		Username:  spec.Username,
 		Password:  spec.Password,
-	})
+	}
+	if spec.TLSCert != "" || spec.TLSCa != "" {
+		tlsCfg, err := buildTLSConfig(spec.TLSCert, spec.TLSKey, spec.TLSCa)
+		if err != nil {
+			return nil, err
+		}
+		mc.TLSConfig = tlsCfg
+	}
+	cli, err := mqttclient.New(mc)
 	if err != nil {
 		return nil, err
 	}
@@ -78,3 +88,26 @@ func (s *mqttSession) Close() error {
 
 // Connected reports whether the underlying client is currently connected.
 func (s *mqttSession) Connected() bool { return s.client.IsConnected() }
+
+// buildTLSConfig assembles the tls.Config for a certificate-authenticated MQTT
+// broker from the device's PEM material: the client keypair it presents and the
+// CA it trusts for the broker. Either may be empty (cert-only or CA-only), and
+// the result is paired with an ssl:// broker URL by the caller.
+func buildTLSConfig(certPem, keyPem, caPem string) (*tls.Config, error) {
+	cfg := &tls.Config{MinVersion: tls.VersionTLS12}
+	if certPem != "" && keyPem != "" {
+		cert, err := tls.X509KeyPair([]byte(certPem), []byte(keyPem))
+		if err != nil {
+			return nil, fmt.Errorf("mqtt tls: client keypair: %w", err)
+		}
+		cfg.Certificates = []tls.Certificate{cert}
+	}
+	if caPem != "" {
+		pool := x509.NewCertPool()
+		if !pool.AppendCertsFromPEM([]byte(caPem)) {
+			return nil, fmt.Errorf("mqtt tls: invalid CA pem")
+		}
+		cfg.RootCAs = pool
+	}
+	return cfg, nil
+}

@@ -48,6 +48,9 @@ func buildSendSpec(d devicescontract.Device, e entities.DeviceEvent) (sendSpec, 
 		spec.clientID = cfg.ClientID
 		spec.username = cfg.Username
 		spec.password = cfg.Password
+		spec.tlsCert = cfg.TLSCertPem
+		spec.tlsKey = cfg.TLSKeyPem
+		spec.tlsCa = cfg.TLSCaPem
 		spec.topic = joinTopic(cfg.BaseTopic, e.MQTT.Topic)
 		spec.qos = byte(e.MQTT.QoS)
 		spec.retain = e.MQTT.Retain

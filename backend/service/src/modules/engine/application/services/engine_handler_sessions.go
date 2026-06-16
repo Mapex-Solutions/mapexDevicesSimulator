@@ -92,6 +92,9 @@ func (s *EngineService) buildSessionSpec(d devicescontract.Device) (enginePorts.
 		spec.ClientID = cfg.ClientID
 		spec.Username = cfg.Username
 		spec.Password = cfg.Password
+		spec.TLSCert = cfg.TLSCertPem
+		spec.TLSKey = cfg.TLSKeyPem
+		spec.TLSCa = cfg.TLSCaPem
 		if cfg.ReceiveEnabled {
 			for _, sub := range cfg.Subscriptions {
 				topic := joinTopic(cfg.BaseTopic, sub.Topic)
@@ -394,7 +397,7 @@ func (s *EngineService) emitStatus(spec enginePorts.SessionSpec, status, detail 
 // sessionSignature captures the fields whose change requires re-opening a session.
 func sessionSignature(spec enginePorts.SessionSpec) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s|%s|%s|%s", spec.BrokerURL, spec.ClientID, spec.Username, spec.Password)
+	fmt.Fprintf(&b, "%s|%s|%s|%s|%s|%s|%s", spec.BrokerURL, spec.ClientID, spec.Username, spec.Password, spec.TLSCert, spec.TLSKey, spec.TLSCa)
 	for _, sub := range spec.Subscriptions {
 		fmt.Fprintf(&b, "|%s:%d", sub.Topic, sub.QoS)
 	}

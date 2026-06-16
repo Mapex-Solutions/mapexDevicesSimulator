@@ -23,6 +23,9 @@ type MQTTConnectionConfig struct {
 	AuthMode       string             `json:"authMode"`
 	Username       string             `json:"username"`
 	Password       string             `json:"password"`
+	TLSCertPem     string             `json:"tlsCertPem"`
+	TLSKeyPem      string             `json:"tlsKeyPem"`
+	TLSCaPem       string             `json:"tlsCaPem"`
 	ReceiveEnabled bool               `json:"receiveEnabled"`
 	Subscriptions  []MQTTSubscription `json:"subscriptions"`
 }

@@ -18,9 +18,13 @@ type DispatchRequest struct {
 	ClientID  string
 	Username  string
 	Password  string
-	Topic     string
-	QoS       byte
-	Retain    bool
+	// TLS client-cert material, in PEM, for an ssl:// broker with cert auth.
+	TLSCert string
+	TLSKey  string
+	TLSCa   string
+	Topic   string
+	QoS     byte
+	Retain  bool
 }
 
 // DispatchResult reports the outcome of one send, for the console/log line.
