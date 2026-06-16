@@ -28,5 +28,9 @@ export function buildMenuList(t: (key: string) => string): MenuItem[] {
 
 		{ icon: 'router', label: t('nav.gateways'), to: '/gateways' },
 		{ icon: 'receipt_long', label: t('nav.logs'), to: '/logs' },
+
+		// Marketplace sits last and, when the sidebar is collapsed, is set a little
+		// apart from the rest (see the mini-state rule in AppSidebar).
+		{ icon: 'storefront', label: t('nav.marketplace'), to: '/marketplace' },
 	];
 }

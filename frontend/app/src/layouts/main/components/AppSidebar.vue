@@ -298,6 +298,14 @@ function getChildIcon(child: MenuItem): string {
       justify-content: center;
     }
   }
+
+  // When the sidebar is collapsed, set the last item (marketplace) a little apart
+  // from the rest so it reads as a distinct, standalone entry.
+  .mini-regular-item:last-child {
+    margin-top: var(--mapex-spacing-lg);
+    border-top: 1px solid var(--mapex-divider);
+    padding-top: var(--mapex-spacing-lg);
+  }
 }
 
 // Active menu styling

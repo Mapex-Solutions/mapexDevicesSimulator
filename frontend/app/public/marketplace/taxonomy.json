@@ -1,0 +1,13 @@
+{
+	"$schema": "mapex-device-marketplace-taxonomy/v1",
+	"protocols": [
+		{ "value": "lorawan", "label": "LoRaWAN" },
+		{ "value": "http", "label": "HTTP" },
+		{ "value": "mqtt", "label": "MQTT" }
+	],
+	"readingTypes": [
+		{ "value": "temperature", "label": "Temperature", "icon": "mdi-thermometer" },
+		{ "value": "humidity", "label": "Humidity", "icon": "mdi-water-percent" },
+		{ "value": "passage_counter", "label": "Passage counter", "icon": "mdi-counter" }
+	]
+}

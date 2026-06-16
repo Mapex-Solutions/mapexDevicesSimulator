@@ -27,6 +27,11 @@ const routes: RouteRecordRaw[] = [
 				component: () => import('pages/devices/createEditDevicePage/CreateEditDevicePage.vue'),
 			},
 			{
+				path: 'marketplace',
+				name: 'marketplace',
+				component: () => import('pages/marketplace/marketplaceListPage/MarketplaceListPage.vue'),
+			},
+			{
 				path: 'logs',
 				name: 'logs',
 				component: () => import('pages/logs/logListPage/LogListPage.vue'),

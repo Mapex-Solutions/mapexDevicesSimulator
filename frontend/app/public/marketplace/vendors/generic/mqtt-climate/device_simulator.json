@@ -1,0 +1,44 @@
+{
+	"$schema": "mapex-device-simulator/v1",
+	"name": "MQTT Climate Node",
+	"protocolId": "mqtt",
+	"enabled": true,
+	"storeLogs": true,
+	"config": {
+		"kind": "mqtt",
+		"brokerUrl": "mqtt://127.0.0.1:1883",
+		"clientId": "mqtt-climate",
+		"baseTopic": "devices/climate",
+		"authMode": "none",
+		"username": "",
+		"password": "",
+		"tlsCertPem": "",
+		"tlsKeyPem": "",
+		"tlsCaPem": "",
+		"receiveEnabled": false,
+		"subscriptions": []
+	},
+	"attributes": {
+		"manufacturer": "Generic",
+		"model": "MQTT-CLIMATE"
+	},
+	"events": [
+		{
+			"id": "publish-climate",
+			"name": "Climate publish",
+			"mqtt": {
+				"topic": "up",
+				"qos": 0,
+				"retain": false,
+				"bodyMode": "raw",
+				"bodyFields": [],
+				"body": "{\n  \"temperature\": {{randFloat(18.0,26.0)}},\n  \"humidity\": {{randInt(40,70)}}\n}"
+			},
+			"schedule": {
+				"enabled": false,
+				"every": 30,
+				"unit": "seconds"
+			}
+		}
+	]
+}

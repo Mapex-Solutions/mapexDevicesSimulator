@@ -8,6 +8,7 @@
 interface SidecarBridge {
 	apiBase?: string;
 	wsBase?: string;
+	marketplaceBase?: string;
 }
 
 /** Read the preload-bridged sidecar origins, if running inside the desktop shell. */
@@ -23,6 +24,27 @@ function bridge(): SidecarBridge | undefined {
 export function resolveApiBase(): string {
 	const origin = bridge()?.apiBase ?? (typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1:5055');
 	return `${origin.replace(/\/$/, '')}/api`;
+}
+
+/**
+ * Resolve the device marketplace base — the online mapexMarketplace service,
+ * independent of the local sidecar. Prefers the preload-bridged origin so the
+ * packaged app can be pointed at the deployed catalog; in development it falls
+ * back to the local marketplace server on :6060.
+ */
+export function resolveMarketplaceBase(): string {
+	const bridged = bridge()?.marketplaceBase;
+	if (bridged) return bridged.replace(/\/$/, '');
+	return 'http://127.0.0.1:6060/api/v1';
+}
+
+/**
+ * Build the URL of a marketplace bundle asset (device image, codec file) for a
+ * model, served by the catalog under `/devices/:vendor/:slug/assets/*`.
+ */
+export function resolveMarketplaceAssetUrl(vendor: string, slug: string, path: string): string {
+	const clean = path.replace(/^\//, '');
+	return `${resolveMarketplaceBase()}/devices/${vendor}/${slug}/assets/${clean}`;
 }
 
 /** Resolve the sidecar WebSocket base used by the live console stream. */

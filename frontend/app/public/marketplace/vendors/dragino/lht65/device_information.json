@@ -1,0 +1,25 @@
+{
+	"$schema": "mapex-device-information/v1",
+	"id": "dragino-lht65",
+	"model": "LHT65",
+	"name": "LHT65 Temperature & Humidity Sensor",
+	"description": "LoRaWAN sensor with a built-in humidity sensor and an external temperature probe, suited for outdoor and industrial monitoring.",
+	"protocol": "lorawan",
+	"readingTypes": ["temperature", "humidity"],
+	"tags": ["probe", "battery", "climate"],
+	"version": "1.0.0",
+	"vendor": {
+		"slug": "dragino",
+		"name": "Dragino",
+		"site": "https://www.dragino.com",
+		"support": "https://www.dragino.com/support"
+	},
+	"manualUrl": "https://www.dragino.com/downloads/index.php?dir=LHT65/UserManual/",
+	"datasheetUrl": "https://www.dragino.com/products/temperature-humidity-sensor/item/151-lht65.html",
+	"codec": {
+		"type": "javascript",
+		"file": "codec/decoder.js",
+		"reference": "https://github.com/dragino/dragino-end-node-decoder"
+	},
+	"images": []
+}

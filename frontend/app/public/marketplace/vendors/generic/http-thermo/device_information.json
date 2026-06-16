@@ -1,0 +1,21 @@
+{
+	"$schema": "mapex-device-information/v1",
+	"id": "generic-http-thermo",
+	"model": "HTTP-THERMO",
+	"name": "HTTP Temperature Beacon",
+	"description": "Reference HTTP device that POSTs a JSON temperature reading to a REST ingest endpoint. A good starting point for any custom HTTP sensor.",
+	"protocol": "http",
+	"readingTypes": ["temperature"],
+	"tags": ["reference", "rest"],
+	"version": "1.0.0",
+	"vendor": {
+		"slug": "generic",
+		"name": "Generic",
+		"site": "https://mapexos.com",
+		"support": ""
+	},
+	"manualUrl": "",
+	"datasheetUrl": "",
+	"codec": null,
+	"images": []
+}

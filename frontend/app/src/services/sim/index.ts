@@ -11,6 +11,9 @@ export const sim = createSimApi();
 
 /** Live console stream helpers, re-exported for the console page. */
 export { resolveWsBase, createConsoleStream } from '@sim/api';
+
+/** Marketplace catalog helpers, re-exported so the UI can build asset URLs. */
+export { resolveMarketplaceBase, resolveMarketplaceAssetUrl } from '@sim/api';
 export type { ConsoleStream } from '@sim/api';
 
 /**

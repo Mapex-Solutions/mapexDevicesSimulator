@@ -1,0 +1,117 @@
+{
+	"$schema": "mapex-device-marketplace/v1",
+	"version": "1.0.0",
+	"items": [
+		{
+			"id": "milesight-em300-th",
+			"vendor": "milesight",
+			"vendorName": "Milesight",
+			"model": "EM300-TH",
+			"name": "EM300-TH Temperature & Humidity Sensor",
+			"description": "Indoor LoRaWAN sensor reporting temperature and relative humidity on a battery that lasts years.",
+			"protocol": "lorawan",
+			"readingTypes": [
+				"temperature",
+				"humidity"
+			],
+			"tags": [
+				"indoor",
+				"battery",
+				"climate"
+			],
+			"icon": "mdi-thermometer",
+			"path": "vendors/milesight/em300-th",
+			"hasCodec": true,
+			"hasManual": true,
+			"slug": "em300-th"
+		},
+		{
+			"id": "dragino-lht65",
+			"vendor": "dragino",
+			"vendorName": "Dragino",
+			"model": "LHT65",
+			"name": "LHT65 Temperature & Humidity Sensor",
+			"description": "LoRaWAN sensor with an external temperature probe and built-in humidity sensing.",
+			"protocol": "lorawan",
+			"readingTypes": [
+				"temperature",
+				"humidity"
+			],
+			"tags": [
+				"probe",
+				"battery",
+				"climate"
+			],
+			"icon": "mdi-thermometer-lines",
+			"path": "vendors/dragino/lht65",
+			"hasCodec": true,
+			"hasManual": true,
+			"slug": "lht65"
+		},
+		{
+			"id": "milesight-vs121",
+			"vendor": "milesight",
+			"vendorName": "Milesight",
+			"model": "VS121",
+			"name": "VS121 AI People Counter",
+			"description": "Ceiling-mounted LoRaWAN sensor that counts people passing through an entrance.",
+			"protocol": "lorawan",
+			"readingTypes": [
+				"passage_counter"
+			],
+			"tags": [
+				"occupancy",
+				"ceiling",
+				"ai"
+			],
+			"icon": "mdi-counter",
+			"path": "vendors/milesight/vs121",
+			"hasCodec": true,
+			"hasManual": true,
+			"slug": "vs121"
+		},
+		{
+			"id": "generic-http-thermo",
+			"vendor": "generic",
+			"vendorName": "Generic",
+			"model": "HTTP-THERMO",
+			"name": "HTTP Temperature Beacon",
+			"description": "Reference HTTP device that POSTs a temperature reading to a REST ingest endpoint.",
+			"protocol": "http",
+			"readingTypes": [
+				"temperature"
+			],
+			"tags": [
+				"reference",
+				"rest"
+			],
+			"icon": "mdi-web",
+			"path": "vendors/generic/http-thermo",
+			"hasCodec": false,
+			"hasManual": false,
+			"slug": "http-thermo"
+		},
+		{
+			"id": "generic-mqtt-climate",
+			"vendor": "generic",
+			"vendorName": "Generic",
+			"model": "MQTT-CLIMATE",
+			"name": "MQTT Climate Node",
+			"description": "Reference MQTT device publishing temperature and humidity to a broker topic.",
+			"protocol": "mqtt",
+			"readingTypes": [
+				"temperature",
+				"humidity"
+			],
+			"tags": [
+				"reference",
+				"broker"
+			],
+			"icon": "mdi-transit-connection-variant",
+			"path": "vendors/generic/mqtt-climate",
+			"hasCodec": false,
+			"hasManual": false,
+			"slug": "mqtt-climate"
+		}
+	]
+}

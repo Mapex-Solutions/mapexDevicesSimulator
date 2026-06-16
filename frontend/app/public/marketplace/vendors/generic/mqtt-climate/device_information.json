@@ -1,0 +1,21 @@
+{
+	"$schema": "mapex-device-information/v1",
+	"id": "generic-mqtt-climate",
+	"model": "MQTT-CLIMATE",
+	"name": "MQTT Climate Node",
+	"description": "Reference MQTT device publishing temperature and humidity to a broker topic. A good starting point for any custom MQTT sensor.",
+	"protocol": "mqtt",
+	"readingTypes": ["temperature", "humidity"],
+	"tags": ["reference", "broker"],
+	"version": "1.0.0",
+	"vendor": {
+		"slug": "generic",
+		"name": "Generic",
+		"site": "https://mapexos.com",
+		"support": ""
+	},
+	"manualUrl": "",
+	"datasheetUrl": "",
+	"codec": null,
+	"images": []
+}

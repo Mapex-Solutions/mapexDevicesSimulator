@@ -1,0 +1,41 @@
+{
+	"$schema": "mapex-device-simulator/v1",
+	"name": "HTTP Temperature Beacon",
+	"protocolId": "http",
+	"enabled": true,
+	"storeLogs": true,
+	"config": {
+		"kind": "http",
+		"url": "https://httpbin.org/post",
+		"method": "POST",
+		"headers": [{ "key": "Content-Type", "value": "application/json" }],
+		"authMode": "none",
+		"apiKeyHeader": "",
+		"apiKey": "",
+		"basicUser": "",
+		"basicPass": ""
+	},
+	"attributes": {
+		"manufacturer": "Generic",
+		"model": "HTTP-THERMO"
+	},
+	"events": [
+		{
+			"id": "report-temp",
+			"name": "Temperature report",
+			"http": {
+				"method": "POST",
+				"path": "",
+				"headers": [],
+				"bodyMode": "raw",
+				"bodyFields": [],
+				"body": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"temperature\": {{randFloat(18.0,26.0)}},\n  \"ts\": \"{{now}}\"\n}"
+			},
+			"schedule": {
+				"enabled": false,
+				"every": 30,
+				"unit": "seconds"
+			}
+		}
+	]
+}
