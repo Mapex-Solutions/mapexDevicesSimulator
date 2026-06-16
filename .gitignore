@@ -1,4 +1,37 @@
-# Local SQLite databases (any location; per-dir rules miss nested data dirs)
+# Node
+node_modules/
+dist/
+lib/
+.npmrc
+
+# Internal
+INTERNALS/
+
+# Claude Code
+.claude/
+CLAUDE.md
+agents.sh
+*.local
+.local/
+
+# Binaries
+*.bin
+workspace_go/bin/
+workspace_go/services/**/main
+workspace_go/services/**/*_bench
+
+# Go vendor
+vendor/
+
+# Compiled / bytecode
+*.class
+*.py[cod]
+*.jar
+*.app
+*.exe
+*.war
+
+# Local SQLite databases (runtime state; the sidecar recreates them on boot)
 *.db
 *.db-journal
 *.db-shm
@@ -6,16 +39,30 @@
 *.sqlite
 *.sqlite3
 
-# Node dependencies (safety net; per-package .gitignore also applies)
-node_modules/
-
-# Claude Code local-only files (shared skills/agents/settings are kept)
-.claude/settings.local.json
-.claude/worktrees/
-
-# Internal project notes and dev-only tooling (kept local, not shared)
-INTERNALS/
-
-# OS and log noise
+# Logs
 *.log
+
+# Unit test reports
+TEST*.xml
+
+# IDE
+.idea/
+.vscode/
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Large media
+*.mp4
+*.tiff
+*.avi
+*.flv
+*.mov
+*.wmv
+
+# Archives
+all.tar
+
+# Parquet
+*.parquet
