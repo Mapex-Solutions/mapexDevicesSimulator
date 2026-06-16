@@ -1,0 +1,92 @@
+# ChirpStack stack for the LoRaWAN e2e journey.
+#
+# Versions are PINNED on purpose: ChirpStack is a third-party LNS we do not own,
+# and the journey provisions it over its gRPC API. Pinning the image keeps that
+# API stable so a server-side change never silently breaks the test. The Go API
+# client in the e2e module is pinned to the matching v4.18.0.
+#
+# Lifecycle is driven by the test: `up -d --wait` on start, `down -v` on finish
+# (a fresh stack every run, which also wipes ChirpStack's remembered OTAA
+# DevNonces so the journey can reuse deterministic keys).
+#
+# Host ports are deliberately remapped to a high, private range so this stack
+# never collides with a developer's own ChirpStack (chirpstack-docker uses the
+# standard 8080/1700/3001/1883). Exposed on loopback only:
+#   - gRPC API           127.0.0.1:18080  (the e2e provisions over this)
+#   - Semtech UDP        127.0.0.1:11700  (the simulator's UDP gateway targets this)
+#   - Basics Station     127.0.0.1:13001  (the simulator's BS device targets this)
+# MQTT (mosquitto) stays internal to the compose network; nothing outside needs it.
+
+name: mapex-e2e-chirpstack
+
+services:
+  chirpstack:
+    image: chirpstack/chirpstack:4.18.0
+    command: -c /etc/chirpstack
+    restart: unless-stopped
+    volumes:
+      - ./configuration/chirpstack:/etc/chirpstack
+    depends_on:
+      - postgres
+      - mosquitto
+      - redis
+    environment:
+      - MQTT_BROKER_HOST=mosquitto
+      - REDIS_HOST=redis
+      - POSTGRESQL_HOST=postgres
+    ports:
+      - "127.0.0.1:18080:8080"
+    # No container healthcheck: the chirpstack image is minimal (no shell), so a
+    # CMD-SHELL probe is unreliable. The e2e lifecycle helper owns readiness by
+    # polling a real gRPC login against 127.0.0.1:18080 until it succeeds.
+
+  chirpstack-gateway-bridge:
+    image: chirpstack/chirpstack-gateway-bridge:4.1.1
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:11700:1700/udp"
+    volumes:
+      - ./configuration/chirpstack-gateway-bridge:/etc/chirpstack-gateway-bridge
+    depends_on:
+      - mosquitto
+
+  chirpstack-gateway-bridge-basicstation:
+    image: chirpstack/chirpstack-gateway-bridge:4.1.1
+    restart: unless-stopped
+    command: -c /etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge-basicstation-eu868.toml
+    ports:
+      - "127.0.0.1:13001:3001"
+    volumes:
+      - ./configuration/chirpstack-gateway-bridge:/etc/chirpstack-gateway-bridge
+    depends_on:
+      - mosquitto
+
+  postgres:
+    image: postgres:14-alpine
+    restart: unless-stopped
+    volumes:
+      - ./configuration/postgresql/initdb:/docker-entrypoint-initdb.d
+      - postgresqldata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=chirpstack
+      - POSTGRES_PASSWORD=chirpstack
+      - POSTGRES_DB=chirpstack
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save 300 1 --save 60 100 --appendonly no
+    volumes:
+      - redisdata:/data
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    # No host port: MQTT is internal to the compose network. ChirpStack and the
+    # gateway bridges reach it by service name; nothing outside the stack needs it.
+    volumes:
+      - ./configuration/mosquitto/config/:/mosquitto/config/
+
+volumes:
+  postgresqldata:
+  redisdata:

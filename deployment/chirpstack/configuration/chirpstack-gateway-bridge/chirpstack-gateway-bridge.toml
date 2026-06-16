@@ -1,0 +1,20 @@
+# Gateway Bridge for the Semtech UDP packet-forwarder transport.
+#
+# The simulator's UDP gateway sends to :1700; the bridge republishes frames to
+# the eu868/ MQTT topics ChirpStack subscribes to.
+
+[integration.mqtt.auth.generic]
+servers=["tcp://mosquitto:1883"]
+username=""
+password=""
+
+[integration.mqtt]
+event_topic_template="eu868/gateway/{{ .GatewayID }}/event/{{ .EventType }}"
+state_topic_template="eu868/gateway/{{ .GatewayID }}/state/{{ .StateType }}"
+command_topic_template="eu868/gateway/{{ .GatewayID }}/command/#"
+
+[backend]
+type="semtech_udp"
+
+  [backend.semtech_udp]
+  udp_bind="0.0.0.0:1700"

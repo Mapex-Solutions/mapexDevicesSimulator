@@ -1,0 +1,44 @@
+# ChirpStack server configuration for the e2e LoRaWAN stack.
+#
+# Trimmed from the upstream chirpstack-docker example to a single enabled region
+# (EU868) so the stack boots fast for tests. The host placeholders ($..._HOST)
+# are expanded from the environment the compose file injects.
+
+[logging]
+  level="info"
+
+[postgresql]
+  dsn="postgres://chirpstack:chirpstack@$POSTGRESQL_HOST/chirpstack?sslmode=disable"
+  max_open_connections=10
+  min_idle_connections=0
+
+[redis]
+  servers=[
+    "redis://$REDIS_HOST/",
+  ]
+  tls_enabled=false
+  cluster=false
+
+[network]
+  # Test NetID. Any value works for a self-contained stack.
+  net_id="000000"
+
+  # Only EU868 is shipped with this deployment; the e2e journey uses it for both
+  # the Semtech UDP and the Basics Station transport.
+  enabled_regions=[
+    "eu868",
+  ]
+
+[api]
+  bind="0.0.0.0:8080"
+
+  # Token-signing secret. This stack is ephemeral and loopback-only, so a fixed
+  # value is fine; it never leaves the test host.
+  secret="mapex-e2e-chirpstack-secret"
+
+[integration]
+  enabled=["mqtt"]
+
+  [integration.mqtt]
+    server="tcp://$MQTT_BROKER_HOST:1883/"
+    json=true
