@@ -190,12 +190,3 @@ bash quickTest/mqtt/curl.sh
 bash quickTest/lorawan-udp/curl.sh
 bash quickTest/lorawan-basic-station/curl.sh
 ```
-
-## Regerar as fotos
-
-```bash
-cd frontend && npm i -D playwright        # só a API; usa o seu Chrome instalado
-npm run dev                                # SPA em :9100
-node INTERNALS/capture-screenshots.mjs     # fotos do simulador
-node INTERNALS/capture-chirpstack.mjs      # fotos do ChirpStack
-```

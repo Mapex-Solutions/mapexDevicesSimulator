@@ -59,26 +59,7 @@ offline. Sem engine, as listas ficam simplesmente vazias (não há dado fake/see
 
 ## 3. Screenshots
 
-Os passo a passo referenciam imagens em `images/` de cada pasta. Elas são geradas
-dirigindo o app em execução com o Playwright, usando o Google Chrome instalado
-(`channel: 'chrome'` — sem download de binário de navegador).
-
-Pré-requisitos:
-1. O app servindo a SPA em `http://localhost:9100` (`cd frontend && npm run dev`).
-2. A engine acessível em `http://127.0.0.1:5055`.
-3. O pacote Playwright disponível: `cd frontend && npm i -D playwright`.
-
-Então:
-
-```bash
-node INTERNALS/capture-screenshots.mjs
-# parâmetros: UI=http://localhost:9100  SIM=http://127.0.0.1:5055  MODE=hash|history
-```
-
-O script cria os quatro dispositivos de exemplo (e o gateway UDP) pela API para as
-páginas renderizarem estado real e, então, fotografa cada página dentro de `images/`.
-Os scripts de captura ficam em [`../INTERNALS/`](../INTERNALS/) (ferramenta de
-desenvolvimento), não nesta pasta.
+Os passo a passo referenciam imagens em `images/` de cada pasta.
 
 ---
 
