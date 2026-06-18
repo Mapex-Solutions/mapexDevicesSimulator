@@ -43,6 +43,7 @@
 					:data="device"
 					:columns="visibleColumns"
 					:actions="rowActions"
+					@click="openDetails"
 					@edit="openEdit"
 					@delete="onDelete"
 					@action="onAction"
@@ -60,6 +61,9 @@
 				/>
 			</div>
 		</div>
+
+		<!-- Right details drawer (opens on row click) -->
+		<DeviceDetailsDrawer v-model="detailsOpen" :device="selectedDevice" @edit="openEdit" />
 	</q-page>
 </template>
 
@@ -78,6 +82,7 @@ import { ListHeaderMenu } from '@components/ListHeaderMenu';
 import { DataRow } from '@components/DataRow';
 import { ListCardEmpty } from '@components/ListCardEmpty';
 import { protocolIcon } from '@components/protocols/ProtocolRegistry';
+import { DeviceDetailsDrawer } from '@components/drawers/deviceDetailsDrawer';
 
 /** COMPOSABLES */
 import { useTranslations } from '@composables/i18n';
@@ -101,6 +106,8 @@ const devicesStore = useDevicesStore();
 
 /** STATE */
 const columnVisibility = ref({ protocol: true, target: true, events: true, created: true, status: true });
+const detailsOpen = ref(false);
+const selectedDevice = ref<Device | null>(null);
 
 /** COMPUTED */
 const visibleDevices = computed(() => {
@@ -174,6 +181,15 @@ function handleColumnsUpdate(columns: ListHeaderMenuColumn[]): void {
 
 function openCreate(): void {
 	void router.push({ name: 'device-new' });
+}
+
+/**
+ * Open the right details drawer for a clicked row.
+ * @param {Device} device - the row's device
+ */
+function openDetails(device: Device): void {
+	selectedDevice.value = device;
+	detailsOpen.value = true;
 }
 
 /**

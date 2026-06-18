@@ -43,6 +43,7 @@
 					:data="gateway"
 					:columns="visibleColumns"
 					:actions="rowActions"
+					@click="openDetails"
 					@edit="openEdit"
 					@delete="onDelete"
 					@action="onAction"
@@ -60,6 +61,9 @@
 				/>
 			</div>
 		</div>
+
+		<!-- Right details drawer (opens on row click) -->
+		<GatewayDetailsDrawer v-model="detailsOpen" :gateway="selectedGateway" @edit="openEdit" />
 	</q-page>
 </template>
 
@@ -77,6 +81,7 @@ import { PageHeader } from '@components/PageHeader';
 import { ListHeaderMenu } from '@components/ListHeaderMenu';
 import { DataRow } from '@components/DataRow';
 import { ListCardEmpty } from '@components/ListCardEmpty';
+import { GatewayDetailsDrawer } from '@components/drawers/gatewayDetailsDrawer';
 
 /** COMPOSABLES */
 import { useTranslations } from '@composables/i18n';
@@ -113,6 +118,8 @@ const CONNECTION_COLOR: Record<string, string> = {
 
 /** STATE */
 const columnVisibility = ref({ link: true, region: true, connection: true, status: true, created: true });
+const detailsOpen = ref(false);
+const selectedGateway = ref<Gateway | null>(null);
 
 /** COMPUTED */
 const gateways = computed(() =>
@@ -180,6 +187,15 @@ function handleColumnsUpdate(columns: ListHeaderMenuColumn[]): void {
 
 function openCreate(): void {
 	void router.push({ name: 'gateway-new' });
+}
+
+/**
+ * Open the right details drawer for a clicked row.
+ * @param {Gateway} gateway - the row's gateway
+ */
+function openDetails(gateway: Gateway): void {
+	selectedGateway.value = gateway;
+	detailsOpen.value = true;
 }
 
 /**

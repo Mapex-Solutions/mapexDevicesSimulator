@@ -69,7 +69,7 @@
 							</q-chip>
 						</div>
 
-						<div class="text-body2 text-grey-8 detail-description">{{ info?.description || item?.description }}</div>
+						<div class="text-body2 text-grey-8 detail-description">{{ description }}</div>
 
 						<div v-if="info?.tags?.length" class="row items-center q-gutter-xs q-mt-md">
 							<q-chip v-for="tag in info?.tags" :key="tag" dense size="sm" outline color="grey-7">{{ tag }}</q-chip>
@@ -87,6 +87,9 @@
 							class="q-mt-md q-pl-none"
 							@click="openExternal(info?.vendor.site)"
 						/>
+						<div v-if="collectedLabel" class="text-caption text-grey-6 q-mt-md">
+							{{ t('marketplace.collectedAt') }}: {{ collectedLabel }}
+						</div>
 					</q-tab-panel>
 
 					<!-- Codecs -->
@@ -99,18 +102,19 @@
 							<div class="row items-center no-wrap">
 								<div class="col">
 									<div class="row items-center q-gutter-xs">
-										<span class="text-body2 text-weight-medium">{{ codec.name }}</span>
+										<span class="text-body2 text-weight-medium">{{ codec.id === 'not-found' ? t('marketplace.codecNotFound') : codec.name }}</span>
 										<q-chip v-if="codec.official" dense size="sm" color="positive" text-color="white" icon="verified">{{ t('marketplace.codecOfficial') }}</q-chip>
 										<q-chip v-if="codec.default" dense size="sm" color="primary" text-color="white">{{ t('marketplace.codecDefault') }}</q-chip>
 									</div>
-									<div class="text-caption text-grey-7 q-mt-xs">
+									<div v-if="codec.id !== 'not-found'" class="text-caption text-grey-7 q-mt-xs">
 										{{ t('marketplace.codecTarget') }}: {{ codec.target || '—' }} · {{ codec.source || 'community' }} · {{ codec.language }}
 									</div>
 								</div>
-								<q-chip dense square size="sm" color="grey-3" text-color="grey-9" class="q-ml-sm">{{ codec.target }}</q-chip>
+								<q-chip v-if="codec.id !== 'not-found'" dense square size="sm" color="grey-3" text-color="grey-9" class="q-ml-sm">{{ codec.target }}</q-chip>
 							</div>
 							<div class="row q-gutter-sm q-mt-sm">
 								<q-btn
+									v-if="codec.id !== 'not-found'"
 									flat
 									dense
 									no-caps
@@ -139,26 +143,26 @@
 					<q-tab-panel name="files" class="q-pa-lg">
 						<div class="column q-gutter-sm">
 							<q-btn
-								v-if="info?.files.datasheet"
+								v-if="datasheetDoc.present"
 								outline
 								no-caps
 								align="left"
 								color="primary"
-								icon="description"
-								:label="t('marketplace.datasheet')"
-								@click="openExternal(fileUrl(info?.files.datasheet))"
+								:icon="datasheetDoc.local ? 'description' : 'open_in_new'"
+								:label="datasheetDoc.local ? t('marketplace.datasheet') : t('marketplace.datasheetOnline')"
+								@click="openExternal(datasheetDoc.href)"
 							/>
 							<q-btn
-								v-if="info?.files.manual"
+								v-if="manualDoc.present"
 								outline
 								no-caps
 								align="left"
 								color="primary"
-								icon="menu_book"
-								:label="t('marketplace.manual')"
-								@click="openExternal(fileUrl(info?.files.manual))"
+								:icon="manualDoc.local ? 'menu_book' : 'open_in_new'"
+								:label="manualDoc.local ? t('marketplace.manual') : t('marketplace.manualOnline')"
+								@click="openExternal(manualDoc.href)"
 							/>
-							<div v-if="!info?.files.datasheet && !info?.files.manual" class="text-body2 text-grey-6">
+							<div v-if="!datasheetDoc.present && !manualDoc.present" class="text-body2 text-grey-6">
 								{{ t('marketplace.noResources') }}
 							</div>
 						</div>
@@ -197,6 +201,7 @@ import { computed, ref, watch } from 'vue';
 
 /** COMPOSABLES */
 import { useTranslations } from '@composables/i18n';
+import { useDateFormat } from '@composables/datetime';
 
 /** SERVICES */
 import { resolveMarketplaceAssetUrl } from '@services/sim';
@@ -217,7 +222,8 @@ const emit = defineEmits<{
 }>();
 
 /** COMPOSABLES */
-const { t } = useTranslations();
+const { t, locale } = useTranslations();
+const { formatDate } = useDateFormat();
 
 /** STATE */
 const tab = ref<'overview' | 'codecs' | 'files'>('overview');
@@ -228,6 +234,25 @@ const tab = ref<'overview' | 'codecs' | 'files'>('overview');
 const imageUrl = computed((): string => {
 	if (!props.item || !props.info?.images.device) return '';
 	return resolveMarketplaceAssetUrl(props.item.vendor, props.item.slug, props.info.images.device);
+});
+
+/** Datasheet/manual resolved to a local PDF asset URL if bundled, else the external link. */
+const datasheetDoc = computed(() => resolveDoc(props.info?.files.datasheet, props.info?.files.datasheetUrl));
+const manualDoc = computed(() => resolveDoc(props.info?.files.manual, props.info?.files.manualUrl));
+
+/** Collection date formatted for display (empty when the entry has none). */
+const collectedLabel = computed((): string => (props.info?.collectedAt ? formatDate(props.info.collectedAt) : ''));
+
+/**
+ * The detail description resolved for the active locale. `description` may be a
+ * plain string (older curated entries) or a { locale: text } map; pick the active
+ * locale, then en-US, then the card's server-resolved description.
+ */
+const description = computed((): string => {
+	const value = props.info?.description;
+	if (typeof value === 'string') return value;
+	if (value) return value[locale.value] ?? value['en-US'] ?? '';
+	return props.item?.description ?? '';
 });
 
 /** WATCHERS */
@@ -254,13 +279,23 @@ function codecFileUrl(codec: MarketplaceCodec): string {
 }
 
 /**
- * Build the URL of a bundled document (datasheet, manual), served as an asset.
- * @param {string} path - the file path relative to the model folder
- * @returns {string} the document URL
+ * Resolve a document for display: a local bundled PDF (served as an asset) takes
+ * precedence; otherwise the external link (e.g. an online wiki manual) is used.
+ * @param {string | undefined} localPath - bundled file path, when present
+ * @param {string | undefined} externalUrl - external doc URL, when present
+ * @returns {{ href: string; local: boolean; present: boolean }} the resolved doc
  */
-function fileUrl(path: string): string {
-	if (!props.item) return '';
-	return resolveMarketplaceAssetUrl(props.item.vendor, props.item.slug, path);
+function resolveDoc(
+	localPath: string | undefined,
+	externalUrl: string | undefined,
+): { href: string; local: boolean; present: boolean } {
+	if (localPath && props.item) {
+		return { href: resolveMarketplaceAssetUrl(props.item.vendor, props.item.slug, localPath), local: true, present: true };
+	}
+	if (externalUrl) {
+		return { href: externalUrl, local: false, present: true };
+	}
+	return { href: '', local: false, present: false };
 }
 
 /**

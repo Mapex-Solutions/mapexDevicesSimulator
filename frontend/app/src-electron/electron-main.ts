@@ -1,14 +1,15 @@
 /**
  * Electron main process. Spawns the Go sidecar on a free localhost port, waits
  * for it to report healthy, then opens a window. In dev the window loads the
- * Vite dev server and reaches the sidecar via the preload bridge; in production
- * the window loads the SPA served by the sidecar itself.
+ * Vite dev server; in production it loads the bundled SPA from disk. Either way
+ * the renderer reaches the sidecar (API/WS) via the preload bridge — the sidecar
+ * no longer serves the UI.
  */
 
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, shell } from 'electron';
 import { pickFreePort, startSidecar, stopSidecar, waitForHealth } from './sidecar/sidecar-manager';
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url));
@@ -54,11 +55,15 @@ async function createWindow(): Promise<void> {
 	const apiBase = `http://127.0.0.1:${sidecarPort}`;
 	const wsBase = `ws://127.0.0.1:${sidecarPort}`;
 
+	// 1366x768 is the minimum the UI is designed for; Electron enforces minWidth/
+	// minHeight so the window can never be dragged below it. useContentSize makes
+	// these the web viewport size (excludes the OS chrome). width/height are the
+	// restore size when un-maximized; the window opens maximized (see below).
 	mainWindow = new BrowserWindow({
-		width: 1280,
-		height: 820,
-		minWidth: 960,
-		minHeight: 640,
+		width: 1366,
+		height: 800,
+		minWidth: 1366,
+		minHeight: 768,
 		useContentSize: true,
 		webPreferences: {
 			contextIsolation: true,
@@ -78,10 +83,25 @@ async function createWindow(): Promise<void> {
 		},
 	});
 
+	// Open using the whole screen (respecting the OS taskbar) while keeping the
+	// 1366x768 floor for when the user restores/resizes the window.
+	mainWindow.maximize();
+
+	// Open external http(s) links (e.g. the GitHub releases page) in the user's
+	// default browser instead of a new Electron window.
+	mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+		if (url.startsWith('http://') || url.startsWith('https://')) {
+			void shell.openExternal(url);
+		}
+		return { action: 'deny' };
+	});
+
 	if (process.env.DEV) {
 		await mainWindow.loadURL(process.env.APP_URL as string);
 	} else {
-		await mainWindow.loadURL(apiBase);
+		// Bundled SPA loaded from disk (file://), so the router runs in hash mode.
+		// The sidecar is reached only for API/WS via the preload bridge.
+		await mainWindow.loadFile(path.resolve(currentDir, 'index.html'));
 	}
 
 	if (process.env.DEBUGGING) {

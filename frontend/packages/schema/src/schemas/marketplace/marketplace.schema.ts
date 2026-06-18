@@ -55,19 +55,38 @@ export const ZodMarketplaceVendorSchema = z.object({
 	support: z.string().default(''),
 });
 
+/**
+ * A localizable text: a plain string (older curated entries) or a per-locale map
+ * keyed by the app's locales (e.g. { "en-US": "…", "pt-BR": "…" }). The UI resolves
+ * one with the active locale, falling back to en-US.
+ */
+export const ZodLocalizedTextSchema = z.union([z.string(), z.record(z.string())]);
+
 /** The detail sheet (`device_information.json`): description, image and files. */
 export const ZodMarketplaceInformationSchema = z.object({
 	id: z.string(),
 	model: z.string(),
-	name: z.string(),
-	description: z.string(),
+	name: ZodLocalizedTextSchema,
+	description: ZodLocalizedTextSchema,
 	protocol: z.string(),
 	readingTypes: z.array(z.string()),
 	tags: z.array(z.string()).default([]),
 	version: z.string().optional(),
 	vendor: ZodMarketplaceVendorSchema,
 	images: z.object({ device: z.string().default('') }).default({}),
-	files: z.object({ datasheet: z.string().default(''), manual: z.string().default('') }).default({}),
+	// Each document can be a bundled PDF (datasheet/manual) and/or an external link
+	// (datasheetUrl/manualUrl) — e.g. an online wiki manual. The UI shows "view PDF"
+	// when a file exists, else "open online".
+	files: z
+		.object({
+			datasheet: z.string().default(''),
+			manual: z.string().default(''),
+			datasheetUrl: z.string().default(''),
+			manualUrl: z.string().default(''),
+		})
+		.default({}),
+	// ISO date the entry was harvested/curated — shown in the UI as a freshness hint.
+	collectedAt: z.string().default(''),
 });
 
 /**

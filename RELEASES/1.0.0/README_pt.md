@@ -12,7 +12,7 @@ ponta. Fala protocolos padrão, então também funciona contra qualquer LNS ou b
 
 - **Status:** em andamento (o catálogo abaixo acompanha cada funcionalidade)
 - **Stack:** Electron + sidecar Go (Fiber, SQLite) · Vue 3 / Quasar / Pinia / Zod
-- **Data:** 2026-06-12
+- **Data:** 2026-06-16
 
 ---
 
@@ -32,6 +32,36 @@ o resto:
 
 O simulador gera o lado do dispositivo; esses projetos são a plataforma que recebe,
 roteia e processa.
+
+---
+
+## Instalação
+
+Baixe o instalador da sua plataforma e execute — não há mais nada para configurar, o
+motor Go já vem dentro do app.
+
+| Plataforma | Arquivo | Instalar |
+|------------|---------|----------|
+| Debian / Ubuntu | `.deb` | `sudo apt install ./mapex-devices-simulator_<versão>_amd64.deb` |
+| RedHat / Fedora | `.rpm` | `sudo dnf install ./mapex-devices-simulator-<versão>.x86_64.rpm` |
+| macOS | `.dmg` | abra o `.dmg` e arraste o app para **Aplicativos** |
+| Windows | `.exe` | execute o instalador e siga o assistente |
+
+### Primeira execução — o aviso de "desenvolvedor não identificado"
+
+Os instaladores **não são assinados** (a assinatura é opcional e paga). Num download
+direto, isso faz o sistema mostrar um **aviso de segurança único** na primeira
+execução. O app é seguro — é só permitir:
+
+- **Linux** — sem aviso; instala e roda.
+- **Windows** — o SmartScreen mostra *"O Windows protegeu seu PC"* → clique em **Mais
+  informações** → **Executar assim mesmo**.
+- **macOS** — o Gatekeeper aponta *desenvolvedor não identificado* → **botão direito no
+  app → Abrir** e confirme, ou vá em **Ajustes do Sistema → Privacidade e Segurança →
+  Abrir mesmo assim**.
+
+Assinar os instaladores (notarização Apple / code-signing Windows) removeria esses
+avisos, mas não é necessário para instalar ou rodar o app.
 
 ---
 
@@ -55,6 +85,7 @@ Cada item tem o seu próprio doc em [`features/`](./features/). Legenda de statu
 | 11 | [Disparo de evento (sob demanda)](./features/11-fire-event.md) | ✅ |
 | 12 | [App desktop + empacotamento do sidecar](./features/12-desktop-app.md) | ✅ |
 | 13 | [Internacionalização (EN / PT-BR)](./features/13-i18n.md) | ✅ |
+| 14 | [Marketplace de dispositivos (navegar + instalar)](./features/14-marketplace.md) | ✅ |
 
 ---
 
@@ -71,6 +102,7 @@ Cada item tem o seu próprio doc em [`features/`](./features/). Legenda de statu
 - **Logs** — histórico persistido, paginado e filtrável das mensagens dos dispositivos.
 - **Desktop** — app Electron que sobe o sidecar Go; build cross-platform do sidecar para empacotamento.
 - **i18n** — inglês e português do Brasil completos.
+- **Marketplace** — navega um catálogo online de fabricantes (filtra por protocolo, tipo de leitura e fabricante) e instala um dispositivo pré-configurado num clique; a instalação reaproveita o caminho de criação de dispositivo, sem endpoint novo.
 
 ---
 

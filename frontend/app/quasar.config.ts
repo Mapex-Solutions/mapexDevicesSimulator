@@ -3,6 +3,10 @@
 
 import { defineConfig } from '#q-app/wrappers';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
+
+// Single source of truth for the version shown in the UI: package.json.
+const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf8'));
 
 export default defineConfig((ctx: any) => {
 	return {
@@ -23,6 +27,11 @@ export default defineConfig((ctx: any) => {
 		],
 
 		build: {
+			// Exposed to the renderer as process.env.APP_VERSION (replaced at build).
+			env: {
+				APP_VERSION: pkg.version,
+			},
+
 			target: {
 				browser: ['es2022', 'firefox115', 'chrome115', 'safari14'],
 				node: 'node20',
@@ -33,7 +42,9 @@ export default defineConfig((ctx: any) => {
 				vueShim: true,
 			},
 
-			vueRouterMode: 'history',
+			// hash mode: the packaged Electron app loads the SPA from file://, where
+			// history mode can't match the path and would 404. Hash works everywhere.
+			vueRouterMode: 'hash',
 
 			alias: {
 				'@src': fileURLToPath(new URL('./src', import.meta.url)),
@@ -88,15 +99,65 @@ export default defineConfig((ctx: any) => {
 
 			inspectPort: 5858,
 
-			bundler: 'packager',
+			bundler: 'builder',
 
-			packager: {
-				appBundleId: 'com.mapex.devices-simulator',
-				// The Go sidecar binary is shipped alongside the app and resolved at
-				// runtime under process.resourcesPath/sidecar so the desktop build can
-				// serve the SPA and the control API without an external process.
-				extraResource: [
-					'src-electron/sidecar/bin',
+			// electron-builder: produces the distributables. Quasar calls
+			// electron-builder for the HOST OS only, so each OS block below activates
+			// when you run the build on that OS (Linux → deb/rpm, macOS → dmg,
+			// Windows → nsis). The Go sidecar ships under resources/bin/<plat>/ via
+			// extraResources, where the sidecar manager resolves it at runtime; the
+			// UI is the bundled SPA rendered by Electron.
+			builder: {
+				appId: 'com.mapex.devices-simulator',
+				// No spaces: on Linux the install path becomes /opt/<productName>, and
+				// spaces there break Chromium's zygote/sandbox child launch
+				// ("failed to execvp: /opt/Mapex"). The friendly label lives in the
+				// per-OS display names below (desktop.Name / CFBundleDisplayName /
+				// nsis.shortcutName).
+				productName: 'MapexDeviceSimulator',
+				// electron is hoisted to the workspace root node_modules, so builder
+				// cannot auto-detect it from app/ — pin the installed version.
+				electronVersion: '33.4.11',
+
+				// ---- Linux: Debian/Ubuntu (.deb) + RedHat/Fedora (.rpm) ----
+				linux: {
+					target: ['deb', 'rpm'],
+					icon: 'src-electron/icons/icon.png',
+					category: 'Utility',
+					// Friendly name shown in the app menu / taskbar.
+					desktop: { Name: 'Mapex Device Simulator' },
+				},
+				deb: {
+					// Force the SUID chrome-sandbox (see the script) so the app runs
+					// sandboxed on Ubuntu 24.04 without --no-sandbox.
+					afterInstall: 'src-electron/deb/after-install.sh',
+				},
+
+				// ---- macOS (.dmg) — only builds when run ON macOS ----
+				mac: {
+					target: ['dmg'],
+					icon: 'src-electron/icons/icon.png', // electron-builder derives .icns
+					category: 'public.app-category.developer-tools',
+					// Pretty name in Finder / menu bar (path stays MapexDeviceSimulator).
+					extendInfo: { CFBundleDisplayName: 'Mapex Device Simulator' },
+				},
+
+				// ---- Windows (.exe / NSIS installer) — only builds when run ON Windows ----
+				win: {
+					target: ['nsis'],
+					icon: 'src-electron/icons/icon.png', // electron-builder derives .ico
+				},
+				nsis: {
+					oneClick: false,
+					perMachine: false,
+					allowToChangeInstallationDirectory: true,
+					createDesktopShortcut: true,
+					createStartMenuShortcut: true,
+					shortcutName: 'Mapex Device Simulator',
+				},
+
+				extraResources: [
+					{ from: 'src-electron/sidecar/bin', to: 'bin' },
 				],
 			},
 		},

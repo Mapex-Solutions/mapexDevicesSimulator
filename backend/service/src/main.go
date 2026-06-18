@@ -13,9 +13,10 @@ import (
 )
 
 // main boots the simulator sidecar: configuration and logging, the SQLite store,
-// the HTTP app (health + business modules + SPA), then blocks until a signal and
-// shuts down gracefully. The Electron launcher passes the bind host and listen
-// port via --addr and --port.
+// the HTTP app (health + business modules), then blocks until a signal and shuts
+// down gracefully. The UI is served by the Electron shell, so the sidecar exposes
+// only /api and /ws. The Electron launcher passes the bind host and listen port
+// via --addr and --port.
 func main() {
 	host := flag.String("addr", "", "host to bind on (empty = use http_address config)")
 	port := flag.Int("port", 0, "HTTP port to listen on (0 = use http_port config)")
@@ -32,11 +33,8 @@ func main() {
 	app := bootstrap.InitFiber(c)
 	bootstrap.InitHealth(app)
 
-	// Business modules register their /api and /ws routes before the SPA catch-all.
+	// Business modules register their /api and /ws routes.
 	appModule.InitModule()
-
-	// SPA static serving is the catch-all and must come last.
-	bootstrap.InitStatic(app)
 
 	sm := shutdown.New()
 	bootstrap.InitShutdown(c, sm, app)

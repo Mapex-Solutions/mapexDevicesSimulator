@@ -12,7 +12,7 @@ end to end. It speaks standard protocols, so it works against any LNS or broker 
 
 - **Status:** in progress (catalog below tracks each functionality)
 - **Stack:** Electron + Go sidecar (Fiber, SQLite) · Vue 3 / Quasar / Pinia / Zod
-- **Date:** 2026-06-12
+- **Date:** 2026-06-16
 
 ---
 
@@ -32,6 +32,35 @@ the rest:
 
 The simulator generates the device side; these projects are the platform that
 receives, routes and processes it.
+
+---
+
+## Installation
+
+Download the installer for your platform and run it — nothing else to set up, the Go
+engine ships inside the app.
+
+| Platform | File | Install |
+|----------|------|---------|
+| Debian / Ubuntu | `.deb` | `sudo apt install ./mapex-devices-simulator_<version>_amd64.deb` |
+| RedHat / Fedora | `.rpm` | `sudo dnf install ./mapex-devices-simulator-<version>.x86_64.rpm` |
+| macOS | `.dmg` | open the `.dmg` and drag the app into **Applications** |
+| Windows | `.exe` | run the installer and follow the wizard |
+
+### First launch — the "unknown developer" prompt
+
+The installers are **not code-signed** (signing is optional and paid). For a direct
+download this means the OS shows a **one-time security prompt** on the first launch.
+The app is safe — just allow it:
+
+- **Linux** — no prompt; it installs and runs.
+- **Windows** — SmartScreen shows *"Windows protected your PC"* → click **More info** →
+  **Run anyway**.
+- **macOS** — Gatekeeper reports an *unidentified developer* → **right-click the app →
+  Open** and confirm, or go to **System Settings → Privacy & Security → Open Anyway**.
+
+Signing the installers (Apple notarization / Windows code-signing) would remove these
+prompts, but it is not required to install or run the app.
 
 ---
 
@@ -55,6 +84,7 @@ Each item links to its own spec under [`features/`](./features/). Status legend:
 | 11 | [Fire event (on-demand)](./features/11-fire-event.md) | ✅ |
 | 12 | [Desktop app + sidecar packaging](./features/12-desktop-app.md) | ✅ |
 | 13 | [Internationalization (EN / PT-BR)](./features/13-i18n.md) | ✅ |
+| 14 | [Device marketplace (browse + install)](./features/14-marketplace.md) | ✅ |
 
 ---
 
@@ -71,6 +101,7 @@ Each item links to its own spec under [`features/`](./features/). Status legend:
 - **Logs** — a persisted, paginated, filterable history of device messages.
 - **Desktop** — an Electron app that spawns the Go sidecar; cross-platform sidecar build for packaging.
 - **i18n** — full English and Brazilian Portuguese.
+- **Marketplace** — browse an online vendor catalog (filter by protocol, reading type and manufacturer) and install a pre-configured device with one click; the install reuses the device-create path, no new endpoint.
 
 ---
 

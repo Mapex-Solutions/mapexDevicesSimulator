@@ -5,6 +5,8 @@ declare namespace NodeJS {
 		NODE_ENV: string;
 		VUE_ROUTER_MODE: 'hash' | 'history' | 'abstract' | undefined;
 		VUE_ROUTER_BASE: string | undefined;
+		// Injected at build time from package.json (see quasar.config build.env).
+		APP_VERSION: string;
 	}
 }
 

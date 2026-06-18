@@ -25,11 +25,8 @@ var DefaultConfiguration = []config.ConfigDefinition{
 	// working directory; the Electron sidecar passes an absolute per-user path.
 	{Key: "sqlite_path", Env: "SQLITE_PATH", Type: "string", Default: "./data/simulator.db"},
 
-	// spa_dir overrides the binary-embedded SPA: when set, static files are served
-	// from this directory (dev/testing). Empty serves the embedded build.
-	{Key: "spa_dir", Env: "SPA_DIR", Type: "string", Default: ""},
-
-	// cors_origins is the dev SPA allowlist (Quasar Vite on :9100). Production is
-	// same-origin (the sidecar serves the SPA), so CORS is irrelevant there.
+	// cors_origins is the SPA allowlist. The UI is never served by the sidecar: in
+	// dev it is the Quasar Vite server (:9100); in production the Electron renderer
+	// calls the sidecar cross-origin, so the API always needs CORS.
 	{Key: "cors_origins", Env: "CORS_ORIGINS", Type: "string", Default: "http://localhost:9100,http://127.0.0.1:9100"},
 }

@@ -127,12 +127,23 @@
 			:installing="!!selectedItem && marketplaceStore.installingId === selectedItem.id"
 			@install="onInstall"
 		/>
+
+		<!-- Install / customize modal -->
+		<MarketplaceInstallDialog
+			:model-value="installOpen"
+			:item="installItem"
+			:draft="installDraft"
+			:loading="!installDraft"
+			:installing="installing"
+			@update:model-value="onInstallOpenChange"
+			@confirm="onConfirmInstall"
+		/>
 	</q-page>
 </template>
 
 <script setup lang="ts">
 /** TYPE IMPORTS */
-import type { MarketplaceInformation, MarketplaceCodec } from '@services/sim';
+import type { MarketplaceInformation, MarketplaceCodec, DeviceInput } from '@services/sim';
 import type { MarketplaceQuery } from '@stores/marketplace';
 import type {
 	MarketplaceCardItem,
@@ -148,6 +159,7 @@ import { PageHeader } from '@components/PageHeader';
 import { ListCardEmpty } from '@components/ListCardEmpty';
 import MarketplaceCard from './components/MarketplaceCard.vue';
 import MarketplaceDetailDialog from './components/MarketplaceDetailDialog.vue';
+import MarketplaceInstallDialog from './components/MarketplaceInstallDialog.vue';
 
 /** COMPOSABLES */
 import { useTranslations } from '@composables/i18n';
@@ -161,7 +173,16 @@ import { sim } from '@services/sim';
 import { useMarketplaceStore } from '@stores/marketplace';
 
 /** COMPOSABLES & STORES */
-const { t } = useTranslations();
+const { t, te, locale } = useTranslations();
+
+/**
+ * Localized label for a reading-type facet: the app i18n label keyed by value,
+ * falling back to the catalog's server-provided label when no key exists.
+ */
+function readingLabel(value: string, fallback: string): string {
+	const key = `marketplace.facets.readingType.${value}`;
+	return te(key) ? t(key) : fallback;
+}
 const router = useRouter();
 const marketplaceStore = useMarketplaceStore();
 
@@ -172,6 +193,13 @@ const selectedItem = ref<MarketplaceCardItem | null>(null);
 const detailInfo = ref<MarketplaceInformation | null>(null);
 const detailCodecs = ref<MarketplaceCodec[]>([]);
 const detailLoading = ref(false);
+const installOpen = ref(false);
+const installItem = ref<MarketplaceCardItem | null>(null);
+const installDraft = ref<DeviceInput | null>(null);
+const installing = ref(false);
+/** Whether the install dialog was opened from the detail dialog, so cancelling
+ * the install returns to it instead of leaving the user on the bare grid. */
+const reopenDetailAfterInstall = ref(false);
 
 /** COMPUTED */
 
@@ -179,7 +207,7 @@ const detailLoading = ref(false);
 const readingMetaByValue = computed((): Record<string, MarketplaceReadingMeta> => {
 	const map: Record<string, MarketplaceReadingMeta> = {};
 	for (const reading of marketplaceStore.facets?.readingTypes ?? []) {
-		map[reading.value] = { value: reading.value, label: reading.label, icon: reading.icon || 'mdi-gauge' };
+		map[reading.value] = { value: reading.value, label: readingLabel(reading.value, reading.label), icon: reading.icon || 'mdi-gauge' };
 	}
 	return map;
 });
@@ -196,7 +224,7 @@ const protocolOptions = computed(() =>
 );
 
 const readingOptions = computed(() =>
-	(marketplaceStore.facets?.readingTypes ?? []).map((r) => ({ label: r.label, value: r.value })),
+	(marketplaceStore.facets?.readingTypes ?? []).map((r) => ({ label: readingLabel(r.value, r.label), value: r.value })),
 );
 
 const manufacturerOptions = computed(() =>
@@ -209,7 +237,7 @@ const hasActiveFilters = computed(
 
 /** The active filters mapped to the catalog query (empty values dropped). */
 const query = computed((): MarketplaceQuery => {
-	const built: MarketplaceQuery = {};
+	const built: MarketplaceQuery = { lang: locale.value };
 	if (filters.value.protocol) built.protocol = filters.value.protocol;
 	if (filters.value.readingType) built.readingType = filters.value.readingType;
 	if (filters.value.manufacturer) built.manufacturer = filters.value.manufacturer;
@@ -276,13 +304,55 @@ async function openDetail(item: MarketplaceCardItem): Promise<void> {
 }
 
 /**
- * Install a catalog model as a new device through the engine, then offer to open
- * the devices list.
+ * Open the install dialog for a catalog model, pre-filled with its template so the
+ * user can adjust identity/credentials (and pick a gateway for LoRaWAN) before the
+ * device is created.
  * @param {MarketplaceCardItem} item - the catalog item to install
  */
 async function onInstall(item: MarketplaceCardItem): Promise<void> {
+	// Never stack on the detail dialog: remember it was open, close it, then open
+	// the install dialog. Cancelling the install reopens the detail (see below).
+	reopenDetailAfterInstall.value = detailOpen.value;
+	detailOpen.value = false;
+	installItem.value = item;
+	installDraft.value = null;
+	installOpen.value = true;
 	try {
-		const device = await marketplaceStore.install(item);
+		installDraft.value = await marketplaceStore.prepareInstall(item);
+	} catch {
+		installOpen.value = false;
+		reopenDetailAfterInstall.value = false;
+		notifyFail({ message: t('marketplace.addFailed') });
+	}
+}
+
+/**
+ * React to the install dialog opening/closing. When it closes WITHOUT a confirmed
+ * install (cancel / backdrop / Esc) and it was opened from the detail dialog,
+ * reopen the detail so the user lands back where they were.
+ * @param {boolean} open - the dialog's next open state
+ */
+function onInstallOpenChange(open: boolean): void {
+	installOpen.value = open;
+	if (!open && reopenDetailAfterInstall.value) {
+		reopenDetailAfterInstall.value = false;
+		detailOpen.value = true;
+	}
+}
+
+/**
+ * Create the device from the (user-edited) draft, then offer to open the devices
+ * list.
+ * @param {DeviceInput} input - the finalized device draft
+ */
+async function onConfirmInstall(input: DeviceInput): Promise<void> {
+	installing.value = true;
+	try {
+		const device = await marketplaceStore.confirmInstall(input);
+		// A successful install closes both modals — clear the flag first so the
+		// install dialog's close handler does not reopen the detail.
+		reopenDetailAfterInstall.value = false;
+		installOpen.value = false;
 		detailOpen.value = false;
 		notifySuccess({
 			message: t('marketplace.added', { name: device.name }),
@@ -290,6 +360,8 @@ async function onInstall(item: MarketplaceCardItem): Promise<void> {
 		});
 	} catch {
 		notifyFail({ message: t('marketplace.addFailed') });
+	} finally {
+		installing.value = false;
 	}
 }
 

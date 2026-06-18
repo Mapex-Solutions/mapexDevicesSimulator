@@ -4,6 +4,8 @@ export interface MarketplaceQuery {
 	readingType?: string;
 	manufacturer?: string;
 	search?: string;
+	/** Active app locale (e.g. "pt-BR") so the catalog returns localized card descriptions. */
+	lang?: string;
 	page?: number;
 	perPage?: number;
 }

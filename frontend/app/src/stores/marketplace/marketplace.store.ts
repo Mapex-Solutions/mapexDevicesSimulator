@@ -66,25 +66,36 @@ export const useMarketplaceStore = defineStore('marketplace', () => {
 	}
 
 	/**
-	 * Install a catalog model as a new device. Fetches the model's simulator
-	 * template, mints a fresh deviceId (the engine assigns the row id and the keys
-	 * are the template's defaults), and creates the device through the engine.
+	 * Fetch a catalog model's simulator template and build an editable device
+	 * draft: the template's defaults plus a freshly minted deviceId. The user
+	 * adjusts identity/credentials in the install dialog before it is created, so
+	 * this does NOT touch the engine yet.
 	 *
-	 * @param {MarketplaceCatalogItem} item - the catalog model to install
-	 * @returns {Promise<Device>} the created device
+	 * @param {MarketplaceCatalogItem} item - the catalog model being installed
+	 * @returns {Promise<DeviceInput>} an editable device draft
 	 */
-	async function install(item: MarketplaceCatalogItem): Promise<Device> {
+	async function prepareInstall(item: MarketplaceCatalogItem): Promise<DeviceInput> {
 		installingId.value = item.id;
 		try {
 			const template = await sim.marketplace.simulator({ vendor: item.vendor, slug: item.slug });
-			const input: DeviceInput = { ...template, deviceId: mintDeviceId(item) };
-			return await sim.devices.create(input);
+			return { ...template, deviceId: mintDeviceId(item) };
 		} finally {
 			installingId.value = null;
 		}
 	}
 
-	return { items, total, facets, status, installingId, fetch, install };
+	/**
+	 * Create the device from the (possibly user-edited) draft through the engine,
+	 * which owns the SQLite write.
+	 *
+	 * @param {DeviceInput} input - the finalized device draft
+	 * @returns {Promise<Device>} the created device
+	 */
+	async function confirmInstall(input: DeviceInput): Promise<Device> {
+		return await sim.devices.create(input);
+	}
+
+	return { items, total, facets, status, installingId, fetch, prepareInstall, confirmInstall };
 });
 
 /**

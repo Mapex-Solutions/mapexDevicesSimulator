@@ -1,11 +1,11 @@
 <template>
 	<transition name="splash-fade">
 		<div v-if="visible" class="splash">
-			<img class="splash__watermark" src="/iot-illustration.png" alt="" aria-hidden="true" />
+			<img class="splash__watermark" :src="'iot-illustration.png'" alt="" aria-hidden="true" />
 
 			<div class="splash__content column items-center">
 				<div class="splash__tile">
-					<q-img src="/only-logo.png" width="84px" height="84px" fit="contain" no-spinner />
+					<q-img :src="'only-logo.png'" width="84px" height="84px" fit="contain" no-spinner />
 				</div>
 
 				<h1 class="splash__title">{{ t('app.name') }}</h1>

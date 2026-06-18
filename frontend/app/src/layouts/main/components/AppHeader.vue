@@ -30,8 +30,8 @@ const { breadcrumbs } = useBreadcrumbs(translatedMenu);
  * Language options with reactive labels
  */
 const languageList = computed(() => [
-  { value: 'en-US', label: t('language.english'), icon: '/flag-usa.svg' },
-  { value: 'pt-BR', label: t('language.portuguese'), icon: '/flag-br.svg' },
+  { value: 'en-US', label: t('language.english'), icon: 'flag-usa.svg' },
+  { value: 'pt-BR', label: t('language.portuguese'), icon: 'flag-br.svg' },
 ]);
 
 /**

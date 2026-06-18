@@ -33,6 +33,8 @@ export function marketplaceApi(http: AxiosInstance) {
 					readingType?: string;
 					manufacturer?: string;
 					search?: string;
+					/** Active app locale (e.g. "pt-BR"); the catalog resolves the card description. */
+					lang?: string;
 					page?: number;
 					perPage?: number;
 				},

@@ -24,6 +24,20 @@ const emit = defineEmits<{
 const route = useRoute();
 const { t } = useTranslations();
 
+/** App version, injected from package.json at build time. */
+const appVersion = process.env.APP_VERSION;
+
+/** GitHub RELEASES folder for the current version. */
+const releasesUrl = `https://github.com/Mapex-Solutions/mapexDevicesSimulator/tree/main/RELEASES/${appVersion}`;
+
+/**
+ * Open this version's release notes on GitHub. In the desktop app the main
+ * process routes external links to the OS browser (setWindowOpenHandler).
+ */
+function openReleases(): void {
+  window.open(releasesUrl, '_blank', 'noopener');
+}
+
 /** COMPUTED */
 
 /**
@@ -62,7 +76,7 @@ function getChildIcon(child: MenuItem): string {
       <q-img
         v-if="!miniState"
         class="full-logo"
-        src="/mapex-logo.png"
+        :src="'mapex-logo.png'"
         width="120"
         height="50"
         fit="contain"
@@ -70,7 +84,7 @@ function getChildIcon(child: MenuItem): string {
       <q-img
         v-else
         class="mini-logo"
-        src="/only-logo.png"
+        :src="'only-logo.png'"
         width="40"
         height="40"
         fit="contain"
@@ -203,15 +217,19 @@ function getChildIcon(child: MenuItem): string {
 
     <!-- Version Info -->
     <div class="absolute-bottom q-pa-sm text-center">
-      <div class="version-info">
-        <q-icon
-          class="q-mr-xs"
-          name="info"
-          size="xs"
-          color="primary"
-        />
-        <span>{{ t('layout.version') }} 0.0.1</span>
-      </div>
+      <q-btn
+        flat
+        dense
+        no-caps
+        size="sm"
+        color="primary"
+        icon="info"
+        :label="`v${appVersion}`"
+        class="version-info"
+        @click="openReleases"
+      >
+        <q-tooltip>{{ t('layout.viewReleases') }}</q-tooltip>
+      </q-btn>
     </div>
   </q-drawer>
 </template>
