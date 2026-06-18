@@ -21,6 +21,9 @@ export const ZodMarketplaceCatalogItemSchema = z.object({
 	readingTypes: z.array(z.string()),
 	tags: z.array(z.string()).default([]),
 	icon: z.string().default(''),
+	// Bundle-relative device photo path (e.g. "images/device.png"); the UI builds the
+	// asset URL from vendor+slug. Empty when none was harvested.
+	image: z.string().default(''),
 	hasCodec: z.boolean().default(false),
 	hasManual: z.boolean().default(false),
 });

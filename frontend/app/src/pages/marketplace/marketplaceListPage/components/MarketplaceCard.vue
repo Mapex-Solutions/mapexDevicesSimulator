@@ -3,7 +3,12 @@
 		<!-- Header: device icon, model and vendor -->
 		<q-card-section class="row items-center no-wrap q-pb-sm">
 			<div class="card-avatar row items-center justify-center q-mr-md">
-				<q-icon :name="item.icon || 'mdi-chip'" size="24px" color="primary" />
+				<q-img v-if="imageUrl" :src="imageUrl" fit="contain" class="card-photo" no-spinner>
+					<template #error>
+						<q-icon :name="item.icon || 'mdi-chip'" size="24px" color="primary" />
+					</template>
+				</q-img>
+				<q-icon v-else :name="item.icon || 'mdi-chip'" size="24px" color="primary" />
 			</div>
 			<div class="col">
 				<div class="text-subtitle2 text-weight-semibold ellipsis">{{ item.model }}</div>
@@ -73,11 +78,17 @@
 /** TYPE IMPORTS */
 import type { MarketplaceCardItem } from '../interfaces/marketplaceListPage.interface';
 
+/** VUE IMPORTS */
+import { computed } from 'vue';
+
 /** COMPONENTS */
 import { AppTooltip } from '@components/AppTooltip';
 
+/** SERVICES */
+import { resolveMarketplaceAssetUrl } from '@services/sim';
+
 /** PROPS & EMITS */
-defineProps<{
+const props = defineProps<{
 	item: MarketplaceCardItem;
 	installing: boolean;
 	addLabel: string;
@@ -85,6 +96,11 @@ defineProps<{
 	manualLabel: string;
 	codecLabel: string;
 }>();
+
+/** Absolute URL of the device photo, when the catalog item carries one. */
+const imageUrl = computed((): string =>
+	props.item.image ? resolveMarketplaceAssetUrl(props.item.vendor, props.item.slug, props.item.image) : '',
+);
 
 const emit = defineEmits<{
 	open: [item: MarketplaceCardItem];
@@ -115,6 +131,12 @@ const emit = defineEmits<{
 	border-radius: var(--mapex-radius-md);
 	background: rgba(var(--mapex-primary-rgb), 0.1);
 	flex-shrink: 0;
+	overflow: hidden;
+}
+
+.card-photo {
+	width: 100%;
+	height: 100%;
 }
 
 .card-description {
