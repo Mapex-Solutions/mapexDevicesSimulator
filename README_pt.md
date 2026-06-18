@@ -3,7 +3,8 @@
 > 🇺🇸 [English version](./README.md)
 
 **Simule dispositivos IoT reais — sem precisar comprar hardware — e injete tráfego
-ao vivo no [MapexOS](https://github.com/Mapex-Solutions/mapexOS).**
+ao vivo no [MapexOS](https://github.com/Mapex-Solutions/mapexOS), ou em qualquer
+plataforma que fale HTTP, MQTT ou LoRaWAN.**
 
 Um app desktop local (Electron em volta de um sidecar Go) que se comporta como
 dispositivos reais na rede: envia uplinks, recebe downlinks, faz join num LNS e
@@ -35,8 +36,16 @@ validar regras de negócio com o
 [workflow do MapexOS](https://github.com/Mapex-Solutions/mapexOS)** — tudo antes de
 um único dispositivo físico chegar.
 
-Ele fala protocolos padrão, então não está preso ao MapexOS: aponte para qualquer
-LNS ou broker e funciona. Mas foi feito para o MapexOS, e é ali que ele brilha.
+**Ele não está preso ao MapexOS.** Como fala **HTTP, MQTT e LoRaWAN** (protocolos
+neutros, de fabricante nenhum), você pode apontá-lo para *qualquer* destino — The
+Things Stack, ChirpStack, um endpoint IoT na nuvem, seu próprio broker ou backend —
+e funciona. Foi feito para o MapexOS e é ali que ele brilha, mas roda em qualquer
+lugar onde protocolos padrão rodem.
+
+> **Quer a plataforma completa por trás?** Suba o MapexOS em minutos com o
+> **[mapexOSDeploy](https://github.com/Mapex-Solutions/mapexOSDeploy)** (Docker
+> Compose), aponte o simulador para ele e veja seus dados fluírem de ponta a ponta —
+> ingestão, conversão, roteamento e o motor de workflow.
 
 ---
 
@@ -54,6 +63,33 @@ LNS ou broker e funciona. Mas foi feito para o MapexOS, e é ali que ele brilha.
 O catálogo completo de funcionalidades está em
 [`RELEASES/1.0.0`](./RELEASES/1.0.0/README_pt.md), e os tutoriais passo a passo em
 [`quickTest`](./quickTest/README_pt.md).
+
+---
+
+## Veja em ação
+
+Um tour rápido — conjunto completo em [`images/`](images).
+
+**Marketplace** — navegue no catálogo e filtre por protocolo, tipo de leitura ou fabricante.
+![Catálogo do marketplace](images/01-marketplace.png)
+
+**Detalhe do dispositivo** — visão geral com descrição, tags de tipo de leitura e o link do fabricante.
+![Visão geral do dispositivo](images/02-device-overview.png)
+
+**Codecs** — os decoders oficiais ChirpStack v4 e TTN que acompanham o dispositivo.
+![Codecs do dispositivo](images/03-device-codecs.png)
+
+**Arquivos** — datasheet e manual do usuário, a um clique.
+![Arquivos do dispositivo](images/04-device-files.png)
+
+**Eventos do dispositivo** — configure eventos nomeados e um agendamento automático.
+![Editar eventos do dispositivo](images/05-device-events.png)
+
+**Console** — dispare eventos e veja as mensagens HTTP / MQTT / LoRaWAN ao vivo com payloads reais.
+![Console ao vivo](images/06-console.png)
+
+**Logs & Eventos** — o histórico persistido de cada mensagem.
+![Logs e eventos](images/07-logs.png)
 
 ---
 
