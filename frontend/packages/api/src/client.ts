@@ -27,15 +27,21 @@ export function resolveApiBase(): string {
 }
 
 /**
+ * The deployed mapexMarketplace catalog. It is online-only (CDN-style), so this
+ * is the default everywhere; a preload-bridged `marketplaceBase` overrides it,
+ * e.g. to point a dev build at a local marketplace server (`:6060/api/v1`).
+ */
+const DEFAULT_MARKETPLACE_BASE = 'https://marketplace.mapexos.io/api/v1';
+
+/**
  * Resolve the device marketplace base — the online mapexMarketplace service,
- * independent of the local sidecar. Prefers the preload-bridged origin so the
- * packaged app can be pointed at the deployed catalog; in development it falls
- * back to the local marketplace server on :6060.
+ * independent of the local sidecar. Prefers the preload-bridged origin so a
+ * build can be repointed without a rebuild; otherwise uses the deployed catalog.
  */
 export function resolveMarketplaceBase(): string {
 	const bridged = bridge()?.marketplaceBase;
 	if (bridged) return bridged.replace(/\/$/, '');
-	return 'http://127.0.0.1:6060/api/v1';
+	return DEFAULT_MARKETPLACE_BASE;
 }
 
 /**
