@@ -84,30 +84,33 @@
 			@button-click="reload"
 		/>
 
-		<!-- Loading -->
-		<div v-else-if="marketplaceStore.status === 'loading'" class="row justify-center q-my-xl">
-			<q-spinner color="primary" size="3em" />
-		</div>
-
-		<!-- Catalog grid -->
+		<!-- Catalog grid: loaded a page at a time as the user scrolls -->
 		<template v-else>
-			<div class="row q-col-gutter-md">
-				<div v-for="card in cards" :key="card.id" class="col-12 col-sm-6 col-md-4">
-					<MarketplaceCard
-						:item="card"
-						:installing="marketplaceStore.installingId === card.id"
-						:add-label="t('marketplace.add')"
-						:details-label="t('marketplace.details')"
-						:manual-label="t('marketplace.manual')"
-						:codec-label="t('marketplace.codec')"
-						@open="openDetail"
-						@install="onInstall"
-					/>
+			<q-infinite-scroll ref="infiniteScroll" :offset="250" @load="onLoad">
+				<div class="row q-col-gutter-md">
+					<div v-for="card in cards" :key="card.id" class="col-12 col-sm-6 col-md-4">
+						<MarketplaceCard
+							:item="card"
+							:installing="marketplaceStore.installingId === card.id"
+							:add-label="t('marketplace.add')"
+							:details-label="t('marketplace.details')"
+							:manual-label="t('marketplace.manual')"
+							:codec-label="t('marketplace.codec')"
+							@open="openDetail"
+							@install="onInstall"
+						/>
+					</div>
 				</div>
-			</div>
+
+				<template #loading>
+					<div class="row justify-center q-my-lg">
+						<q-spinner color="primary" size="2.5em" />
+					</div>
+				</template>
+			</q-infinite-scroll>
 
 			<ListCardEmpty
-				v-if="!cards.length"
+				v-if="!cards.length && marketplaceStore.status !== 'loading'"
 				icon="storefront"
 				:title="t('marketplace.emptyTitle')"
 				:description="t('marketplace.empty')"
@@ -153,6 +156,7 @@ import type {
 
 /** VUE IMPORTS */
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
+import type { QInfiniteScroll } from 'quasar';
 
 /** COMPONENTS */
 import { PageHeader } from '@components/PageHeader';
@@ -186,8 +190,12 @@ function readingLabel(value: string, fallback: string): string {
 const router = useRouter();
 const marketplaceStore = useMarketplaceStore();
 
+/** How many catalog cards each infinite-scroll page pulls. */
+const PER_PAGE = 24;
+
 /** STATE */
 const filters = ref<MarketplaceFilters>({ search: '', protocol: null, readingType: null, manufacturer: null });
+const infiniteScroll = ref<QInfiniteScroll | null>(null);
 const detailOpen = ref(false);
 const selectedItem = ref<MarketplaceCardItem | null>(null);
 const detailInfo = ref<MarketplaceInformation | null>(null);
@@ -258,8 +266,8 @@ const cards = computed((): MarketplaceCardItem[] =>
 
 /** WATCHERS */
 
-/** Re-query the catalog whenever a filter changes. */
-watch(query, (next) => void marketplaceStore.fetch(next));
+/** A filter (or locale) change is a brand-new result set — reload from page 1. */
+watch(query, () => void reload());
 
 /** FUNCTIONS */
 
@@ -267,9 +275,41 @@ function resetFilters(): void {
 	filters.value = { search: '', protocol: null, readingType: null, manufacturer: null };
 }
 
-/** Reload the current query (offline retry / refresh). */
+/**
+ * Infinite-scroll page loader. Derives the next page from how many cards are
+ * already in the grid, so it stays correct after a reset. Replaces the grid on
+ * the first page and appends afterwards; stops once every match is loaded, the
+ * catalog goes offline, or a page makes no progress (a failed load-more).
+ *
+ * @param {number} _index - Quasar's load index (unused; page is derived from the grid)
+ * @param {(stop?: boolean) => void} done - signals the page finished and whether to stop
+ */
+async function onLoad(_index: number, done: (stop?: boolean) => void): Promise<void> {
+	const loaded = marketplaceStore.items.length;
+	if (loaded > 0 && loaded >= marketplaceStore.total) {
+		done(true);
+		return;
+	}
+	const nextPage = Math.floor(loaded / PER_PAGE) + 1;
+	await marketplaceStore.fetch({ ...query.value, page: nextPage, perPage: PER_PAGE }, loaded > 0);
+	const after = marketplaceStore.items.length;
+	const stalled = loaded > 0 && after === loaded; // append returned nothing → stop retrying
+	done(marketplaceStore.status === 'offline' || stalled || after >= marketplaceStore.total);
+}
+
+/** Reload the catalog from the first page (filter change / offline retry / refresh). */
 function reload(): void {
-	void marketplaceStore.fetch(query.value);
+	marketplaceStore.reset();
+	const scroller = infiniteScroll.value;
+	if (scroller) {
+		// Reset the scroller's internal index and let it re-trigger the first page.
+		scroller.reset();
+		scroller.resume();
+		scroller.trigger();
+	} else {
+		// No scroller mounted yet (e.g. retrying from the offline state).
+		void marketplaceStore.fetch({ ...query.value, page: 1, perPage: PER_PAGE });
+	}
 }
 
 /** Empty-grid action: clear filters when any are active, otherwise reload. */
@@ -372,7 +412,7 @@ function onConnectivityChange(): void {
 
 /** LIFECYCLE HOOKS */
 onMounted(() => {
-	void marketplaceStore.fetch(query.value);
+	// The grid is loaded by q-infinite-scroll, which fires its first @load on mount.
 	window.addEventListener('online', onConnectivityChange);
 	window.addEventListener('offline', onConnectivityChange);
 });

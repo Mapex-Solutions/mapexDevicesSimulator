@@ -36,15 +36,22 @@ export const useMarketplaceStore = defineStore('marketplace', () => {
 	const installingId = ref<string | null>(null);
 
 	/**
-	 * Fetch a filtered page of catalog cards. The first call also loads the facet
-	 * options. A network failure flips the store to `offline` and clears the grid.
+	 * Fetch a page of catalog cards. With `append`, the page is concatenated onto
+	 * the current grid (infinite scroll); otherwise it replaces it. The first call
+	 * also loads the facet options. A network failure on the first page flips the
+	 * store to `offline` and clears the grid; a failure while appending keeps what
+	 * is already loaded so a transient load-more error never blanks the list.
 	 *
-	 * @param {MarketplaceQuery} [query] - the active filters
+	 * @param {MarketplaceQuery} [query] - the active filters plus page/perPage
+	 * @param {boolean} [append] - concatenate onto the grid instead of replacing it
 	 */
-	async function fetch(query: MarketplaceQuery = {}): Promise<void> {
+	async function fetch(query: MarketplaceQuery = {}, append = false): Promise<void> {
 		if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-			status.value = 'offline';
-			items.value = [];
+			if (!append) {
+				status.value = 'offline';
+				items.value = [];
+				total.value = 0;
+			}
 			return;
 		}
 
@@ -54,15 +61,27 @@ export const useMarketplaceStore = defineStore('marketplace', () => {
 				sim.marketplace.list(query),
 				facets.value ? Promise.resolve(facets.value) : sim.marketplace.facets(),
 			]);
-			items.value = page.items;
+			items.value = append ? [...items.value, ...page.items] : page.items;
 			total.value = page.total;
 			facets.value = facetSet;
 			status.value = 'online';
 		} catch {
-			items.value = [];
-			facets.value = null;
-			status.value = 'offline';
+			if (append) {
+				// Keep the already-loaded cards; the next scroll can retry.
+				status.value = 'online';
+			} else {
+				items.value = [];
+				total.value = 0;
+				facets.value = null;
+				status.value = 'offline';
+			}
 		}
+	}
+
+	/** Drop the current grid so the next fetch reloads from the first page. */
+	function reset(): void {
+		items.value = [];
+		total.value = 0;
 	}
 
 	/**
@@ -95,7 +114,7 @@ export const useMarketplaceStore = defineStore('marketplace', () => {
 		return await sim.devices.create(input);
 	}
 
-	return { items, total, facets, status, installingId, fetch, prepareInstall, confirmInstall };
+	return { items, total, facets, status, installingId, fetch, reset, prepareInstall, confirmInstall };
 });
 
 /**
