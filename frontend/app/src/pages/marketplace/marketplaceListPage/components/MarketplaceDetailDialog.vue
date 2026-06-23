@@ -324,8 +324,11 @@ function openExternal(url: string | undefined): void {
 	.header-thumb {
 		width: 52px;
 		height: 52px;
+		padding: 4px;
 		border-radius: var(--mapex-radius-md);
-		background: rgba(var(--mapex-primary-rgb), 0.1);
+		// Constant light plate so transparent device SVGs stay visible in dark mode.
+		background: var(--mapex-device-media-bg);
+		border: 1px solid var(--mapex-device-media-border);
 		flex-shrink: 0;
 		overflow: hidden;
 	}
@@ -343,8 +346,11 @@ function openExternal(url: string | undefined): void {
 .overview-image {
 	width: 100%;
 	height: 200px;
+	padding: var(--mapex-spacing-md);
 	border-radius: var(--mapex-radius-lg);
-	background: var(--mapex-surface-sunken);
+	// Constant light plate so transparent device SVGs stay visible in dark mode.
+	background: var(--mapex-device-media-bg);
+	border: 1px solid var(--mapex-device-media-border);
 	overflow: hidden;
 }
 

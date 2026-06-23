@@ -73,6 +73,12 @@ body.body--light {
   --mapex-surface-sunken:     #F0F2F5;
   --mapex-surface-highlight:  rgba(0, 0, 0, 0.02);
 
+  // Constant light "plate" for vendor device imagery. Marketplace images are
+  // often transparent SVG line-art (e.g. Milesight) that vanishes on a dark
+  // surface, so this stays light in BOTH themes to keep them legible.
+  --mapex-device-media-bg:    #FFFFFF;
+  --mapex-device-media-border: rgba(0, 0, 0, 0.08);
+
   // Border Radius Scale
   --mapex-radius-xs:          4px;
   --mapex-radius-sm:          6px;
@@ -199,6 +205,12 @@ body.body--dark {
   // Surface (extra)
   --mapex-surface-sunken:     #151E27;
   --mapex-surface-highlight:  rgba(255, 255, 255, 0.04);
+
+  // Kept light on purpose (see light theme): a constant plate so transparent
+  // device SVGs stay visible in dark mode. Border is lighter to frame the
+  // white plate against the dark surface behind it.
+  --mapex-device-media-bg:    #FFFFFF;
+  --mapex-device-media-border: rgba(255, 255, 255, 0.12);
 
   // Border Radius Scale
   --mapex-radius-xs:          4px;

@@ -60,8 +60,8 @@ function changeLanguage(lang: string): void {
     class="header-container"
   >
     <q-toolbar class="q-px-lg q-py-sm">
-      <!-- Menu Toggle and Separator -->
-      <div class="row items-center">
+      <!-- Menu Toggle, Brand and Separator -->
+      <div class="row items-center no-wrap">
         <q-btn
           flat
           dense
@@ -73,6 +73,20 @@ function changeLanguage(lang: string): void {
           aria-label="Menu"
           @click="emit('toggle-drawer')"
         />
+
+        <!-- Brand: Mapex ball + app name -->
+        <router-link to="/" class="header-brand">
+          <q-img
+            class="header-brand__logo"
+            :src="'only-logo.png'"
+            width="28px"
+            height="28px"
+            fit="contain"
+            no-spinner
+          />
+          <span class="header-brand__name">Mapex Device Simulator</span>
+        </router-link>
+
         <q-separator
           vertical
           class="q-mx-sm"
@@ -161,5 +175,26 @@ function changeLanguage(lang: string): void {
   background: var(--mapex-header-bg);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--mapex-header-border);
+}
+
+.header-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mapex-spacing-sm);
+  text-decoration: none;
+
+  &__name {
+    color: var(--mapex-primary);
+    font-weight: var(--mapex-font-weight-semibold);
+    font-size: var(--mapex-font-md);
+    white-space: nowrap;
+  }
+
+  // Hide the wordmark on narrow screens — keep just the ball next to breadcrumbs.
+  @media (max-width: 600px) {
+    &__name {
+      display: none;
+    }
+  }
 }
 </style>

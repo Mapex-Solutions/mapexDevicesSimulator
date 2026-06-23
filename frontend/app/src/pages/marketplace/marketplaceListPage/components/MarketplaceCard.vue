@@ -128,8 +128,11 @@ const emit = defineEmits<{
 .card-avatar {
 	width: 44px;
 	height: 44px;
+	padding: 3px;
 	border-radius: var(--mapex-radius-md);
-	background: rgba(var(--mapex-primary-rgb), 0.1);
+	// Constant light plate so transparent device SVGs stay visible in dark mode.
+	background: var(--mapex-device-media-bg);
+	border: 1px solid var(--mapex-device-media-border);
 	flex-shrink: 0;
 	overflow: hidden;
 }
